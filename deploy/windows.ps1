@@ -16,11 +16,11 @@ try {
       try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
       return ([BitConverter]::ToString($bytes)).Replace('-','').ToLowerInvariant()
     }
-    $settings=@('APP_PORT=4178','BIND_ADDRESS=0.0.0.0','APP_USERNAME=sunny',('APP_PASSWORD='+(New-Secret)),('MYSQL_ROOT_PASSWORD='+(New-Secret)),('DB_PASSWORD='+(New-Secret)),'COOKIE_SECURE=false','DB_HOST=127.0.0.1','DB_PORT=3306','DB_NAME=sunny_english','DB_USER=sunny')
+    $settings=@('APP_PORT=4178','BIND_ADDRESS=0.0.0.0','APP_USERNAME=sunny',('MYSQL_ROOT_PASSWORD='+(New-Secret)),('DB_PASSWORD='+(New-Secret)),'DB_HOST=127.0.0.1','DB_PORT=3306','DB_NAME=sunny_english','DB_USER=sunny')
     $envPath=Join-Path $projectRoot '.env'
     $file=[IO.File]::Open($envPath,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
     try { $bytes=[Text.UTF8Encoding]::new($false).GetBytes(($settings -join "`n")+"`n");$file.Write($bytes,0,$bytes.Length) } finally { $file.Dispose() }
-    Write-Host 'Created .env with random passwords. Keep this file for future restarts.'
+    Write-Host 'Created .env with database credentials. Website opens without a login.'
   }
   $composeArgs=@('compose','--env-file','.env','-f','compose.yaml')
   switch ($Action) {
@@ -46,7 +46,7 @@ try {
     $portLine=Get-Content -LiteralPath '.env' | Where-Object { $_ -match '^APP_PORT=' } | Select-Object -First 1
     $sitePort=if($portLine){($portLine -split '=',2)[1].Trim()}else{'4178'}
     Write-Host "Ready: http://localhost:$sitePort"
-    Write-Host 'Login: APP_USERNAME and APP_PASSWORD in .env. Use server IP when accessing remotely.'
+    Write-Host 'No login required. Use server IP when accessing remotely.'
   }
 } catch { Write-Host $_.Exception.Message -ForegroundColor Red; exit 1 }
 finally { Pop-Location }

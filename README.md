@@ -2,6 +2,8 @@
 
 独立部署的个人英语学习网站：JavaScript 前端 + Node.js 后端 + MySQL 8.4。
 
+网页免密码，打开即用。使用同一部署地址的设备共享一份个人学习记录。
+
 - 每天 40 分钟：词汇 15、听力 10、口语 10、复习 5。
 - 第一个月 30 课：15 课工作英语、15 课日常与出国；30 段对话、60 道听力题、150 个口语问题。
 - 300 个词汇练习位，覆盖 142 个不同词条与短语，后续课程穿插复习前面学过的词。
@@ -20,9 +22,9 @@
 - Windows：双击 `deploy-windows.cmd`。
 - Linux：在项目目录运行 `bash deploy-linux.sh`。
 
-首次执行自动生成随机密码到 `.env`，启动 MySQL、创建数据库表和个人账号，再启动网站。健康检查通过后才会显示 Ready。
+首次执行自动生成数据库连接密码到 `.env`，启动 MySQL、创建数据库表和个人学习档案，再启动网站。健康检查通过后才会显示 Ready。
 
-访问 `http://localhost:4178`；服务器部署则使用 `http://服务器IP:4178`。登录账号与密码分别是 `.env` 中的 `APP_USERNAME`、`APP_PASSWORD`。
+访问 `http://localhost:4178`；服务器部署则使用 `http://服务器IP:4178`。直接进入学习首页，无需账号密码。
 
 详细操作见 [部署与 MySQL 说明](DEPLOY.md)。
 
@@ -30,7 +32,7 @@
 
 ```text
 frontend/             页面、课程内容、数据同步交互
-backend/              登录、会话、学习数据接口、MySQL 数据访问
+backend/              个人学习数据接口、MySQL 数据访问
 backend/schema.sql    数据表结构（启动时自动创建）
 deploy/               Windows 脚本与 Nginx HTTPS 配置示例
 tests/                接口检查、MySQL 集成检查、临时 UI 预览
@@ -53,24 +55,22 @@ deploy-linux.sh       Linux 一键入口
 
 创建数据库与专用账号，按 `.env.example` 填写 `.env`。安装 Node.js 22 或更高版本，执行 `npm ci`、`npm start`，访问 `http://localhost:3000`。
 
-`APP_PASSWORD` 至少 12 个字符，只在账号第一次创建时使用，重新部署不会重置已有密码。
+`APP_USERNAME` 是内部学习档案标识，默认 sunny，用于兼容已有数据，不是网页登录账号。已有 `.env` 中的 `APP_PASSWORD` 会被忽略，无需更改数据库密码。
 
 ## 接口
 
 | 方法与路径 | 用途 |
 | --- | --- |
 | `GET /api/health` | 服务与数据库健康检查 |
-| `POST /api/auth/login` | 登录，设置 HttpOnly 会话 Cookie |
-| `GET /api/auth/me` | 获取当前账号 |
-| `POST /api/auth/logout` | 退出并使当前会话失效 |
+| `GET /api/profile` | 获取个人学习档案，无需登录 |
 | `GET /api/state` | 读取个人学习数据与版本号 |
 | `PUT /api/state` | 带版本号保存，冲突返回 409 |
 
-密码使用带盐 scrypt 哈希，会话令牌仅以 SHA-256 摘要入库。数据按账号隔离，每次保存使用数据库事务，多个页面的旧版本不会覆盖较新数据。
+每次保存使用数据库事务，多个页面的旧版本不会覆盖较新数据。更新会继续使用原个人档案，保留已有学习进度；旧版账号表及密码哈希仅为数据兼容保留，不用于网页登录。
 
 ## 内容与检查
 
-`npm test` 检查数据校验、密码校验、登录权限、账号隔离、保存、冲突和退出，使用内存存储替身。
+`npm test` 检查免密读取与保存、旧档案复用、数据校验、冲突处理及旧接口兼容，使用内存存储替身。
 
 真实 MySQL 检查：准备独立测试数据库，将 `.env` 的 `DB_NAME` 改为以 `_test` 结尾的库名，再运行 `npm run test:mysql`。检查只清理自己创建的测试账号，不删除数据库。不要对正式学习数据库运行测试。
 

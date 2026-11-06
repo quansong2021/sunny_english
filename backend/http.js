@@ -13,7 +13,7 @@ async function jsonBody(req){
   let size=0;const chunks=[];for await(const b of req){size+=b.length;if(size>2*1024*1024)throw new HttpError(413,'数据文件过大。');chunks.push(b);}
   try{return JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw new HttpError(400,'JSON 格式不正确。');}
 }
-export function createApp(store,{secureCookie=false,logError=console.error,localPreviewUser=null}={}){
+export function createApp(store,{secureCookie=false,logError=console.error,localPreviewUser=null,passwordlessUser=null}={}){
   const attempts=new Map();
   const cookie=(token,expire=false)=>`sunny_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${expire?0:604800}${secureCookie?'; Secure':''}`;
   const server=createServer(async(req,res)=>{
@@ -29,6 +29,7 @@ export function createApp(store,{secureCookie=false,logError=console.error,local
       }
       if(path==='/api/health'&&req.method==='GET'){await store.health();send(200,{ok:true});return;}
       if(path==='/api/auth/login'&&req.method==='POST'){
+        if(passwordlessUser){send(200,{username:passwordlessUser.username,passwordless:true});return;}
         const now=Date.now(),ip=req.socket.remoteAddress;
         for(const [k,v] of attempts)if(v.until<now)attempts.delete(k);
         if(attempts.size>10000)throw new HttpError(429,'登录请求过多，请稍后再试。');
@@ -43,10 +44,10 @@ export function createApp(store,{secureCookie=false,logError=console.error,local
         const localHost=/^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/.test(req.headers.host||'');
         const localAddress=['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
         const preview=localPreviewUser&&localHost&&localAddress;
-        const user=preview?localPreviewUser:token?await store.session(tokenHash(token)):null;
+        const user=passwordlessUser||(preview?localPreviewUser:token?await store.session(tokenHash(token)):null);
         if(!user)throw new HttpError(401,'请先登录。');
-        if(path==='/api/auth/me'&&req.method==='GET'){send(200,{username:user.username,passwordless:!!preview});return;}
-        if(path==='/api/auth/logout'&&req.method==='POST'){if(token)await store.deleteSession(tokenHash(token));res.setHeader('Set-Cookie',cookie('',true));send(200,{ok:true});return;}
+        if((path==='/api/auth/me'||path==='/api/profile')&&req.method==='GET'){send(200,{username:user.username,passwordless:!!(passwordlessUser||preview)});return;}
+        if(path==='/api/auth/logout'&&req.method==='POST'){if(token&&!passwordlessUser)await store.deleteSession(tokenHash(token));res.setHeader('Set-Cookie',cookie('',true));send(200,{ok:true});return;}
         if(path==='/api/state'&&req.method==='GET'){send(200,await store.load(user.id));return;}
         if(path==='/api/state'&&req.method==='PUT'){
           const b=await jsonBody(req);if(!b||!Number.isInteger(b.revision)||b.revision<0||!validState(b.state))throw new HttpError(400,'学习数据格式不正确。');

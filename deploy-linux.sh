@@ -14,17 +14,15 @@ if [[ ! -f .env ]]; then
 APP_PORT=4178
 BIND_ADDRESS=0.0.0.0
 APP_USERNAME=sunny
-APP_PASSWORD=$(secret)
 MYSQL_ROOT_PASSWORD=$(secret)
 DB_PASSWORD=$(secret)
-COOKIE_SECURE=false
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_NAME=sunny_english
 DB_USER=sunny
 EOF
   )
-  printf 'Created .env with random passwords. Keep this file for future restarts.\n'
+  printf 'Created .env with database credentials. Website opens without a login.\n'
 fi
 compose=(docker compose --env-file .env -f compose.yaml)
 case "$action" in
@@ -44,5 +42,5 @@ esac
 if [[ "$action" == start ]]; then
   site_port="$(sed -n 's/^APP_PORT=//p' .env | tr -d '\r')"
   printf 'Ready: http://localhost:%s\n' "${site_port:-4178}"
-  printf 'Login: APP_USERNAME and APP_PASSWORD in .env. Use server IP when accessing remotely.\n'
+  printf 'No login required. Use server IP when accessing remotely.\n'
 fi

@@ -1,5 +1,5 @@
 # Install your certificate first. Replace english.example.com and the certificate paths.
-# Set BIND_ADDRESS=127.0.0.1 and COOKIE_SECURE=true in .env, then run the deploy script again.
+# Set BIND_ADDRESS=127.0.0.1 in .env, then run the deploy script again.
 server {
     listen 80;
     server_name english.example.com;

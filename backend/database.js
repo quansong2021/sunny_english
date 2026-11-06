@@ -1,19 +1,19 @@
 import mysql from 'mysql2/promise';
 import { readFile } from 'node:fs/promises';
 import { emptyState } from './state.js';
-import { hashPassword } from './auth.js';
+import { hashPassword,newToken } from './auth.js';
 export class ConflictError extends Error {}
 export function createPool(env=process.env) {
   return mysql.createPool({host:env.DB_HOST||'127.0.0.1',port:Number(env.DB_PORT||3306),user:env.DB_USER||'sunny',password:env.DB_PASSWORD,database:env.DB_NAME||'sunny_english',charset:'utf8mb4',timezone:'Z',dateStrings:true,connectionLimit:5,supportBigNumbers:true});
 }
 export async function initialize(pool,env=process.env) {
-  if(!env.APP_PASSWORD||env.APP_PASSWORD.length<12)throw new Error('APP_PASSWORD must contain at least 12 characters.');
   if(!/^[a-zA-Z0-9_.-]{1,64}$/.test(env.APP_USERNAME||'sunny'))throw new Error('APP_USERNAME is invalid.');
   const sql=await readFile(new URL('./schema.sql',import.meta.url),'utf8');
   for(const statement of sql.split(';').map(s=>s.trim()).filter(Boolean))await pool.query(statement);
   const username=env.APP_USERNAME||'sunny';
   const [rows]=await pool.execute('SELECT id FROM users WHERE username=?',[username]);
-  if(!rows.length)await pool.execute('INSERT IGNORE INTO users(username,password_hash) VALUES (?,?)',[username,await hashPassword(env.APP_PASSWORD)]);
+  // Keep the existing profile and its learning data. The legacy hash column is not used for sign-in.
+  if(!rows.length)await pool.execute('INSERT IGNORE INTO users(username,password_hash) VALUES (?,?)',[username,await hashPassword(newToken())]);
   await pool.execute('DELETE FROM sessions WHERE expires_at <= UTC_TIMESTAMP()');
 }
 export class MysqlStore {

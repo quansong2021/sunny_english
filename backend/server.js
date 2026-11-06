@@ -4,7 +4,10 @@ const pool=createPool();
 try {
   await initialize(pool);
   const port=Number(process.env.PORT||3000);
-  const server=createApp(new MysqlStore(pool),{secureCookie:process.env.COOKIE_SECURE==='true'});
+  const store=new MysqlStore(pool);
+  const profile=await store.findUser(process.env.APP_USERNAME||'sunny');
+  if(!profile)throw new Error('Learning profile could not be initialized.');
+  const server=createApp(store,{passwordlessUser:{id:profile.id,username:profile.username}});
   server.listen(port,'0.0.0.0',()=>console.log(`Sunny English listening on port ${port}`));
   const shutdown=()=>{server.close(async()=>{await pool.end();process.exit(0);});setTimeout(()=>process.exit(1),10000).unref();};
   process.on('SIGTERM',shutdown);process.on('SIGINT',shutdown);

@@ -1,7 +1,7 @@
 const $=s=>document.querySelector(s), esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const today=()=>new Date().toLocaleDateString('en-CA'),intervals=[1,2,3,7,16];
 let state={name:'Sunny',goal:40,done:{},words:{},answers:{},notes:{},activity:{},plans:{},resume:null};
-let revision=0,dirty=false,changeNumber=0,syncPromise=null,syncTimer=null,blocked=false,currentUser=null,ready=false;
+let revision=0,dirty=false,changeNumber=0,syncPromise=null,syncTimer=null,blocked=false,ready=false;
 let lesson=1,section='vocab',wordIndex=0,revealed=false,promptIndex=0,filter='全部',weekFilter='全部',wordFilter='到期复习',listenStage=0,recording=null,stream=null,audioUrl=null,recordTimer=null;
 const goal=()=>LearningPace.goal(state,today()),mode=()=>LearningPace.mode(state,today()),timings=()=>LearningPace.timings(state,today());
 const labels=['词汇与短语','三遍听力','情景口语','复习与总结'],sections=['vocab','listening','speaking','review'];
@@ -13,12 +13,12 @@ function save(){dirty=true;changeNumber++;syncStatus('待保存…');clearTimeou
 function flush(){
   clearTimeout(syncTimer);if(syncPromise)return syncPromise;if(!dirty||blocked||!ready)return Promise.resolve();
   syncPromise=(async()=>{try{while(dirty&&!blocked){const version=changeNumber,copy=JSON.parse(JSON.stringify(state));syncStatus('正在保存…');const result=await api('/state',{method:'PUT',body:JSON.stringify({state:copy,revision})});revision=result.revision;if(version===changeNumber)dirty=false;}if(!dirty)syncStatus('已保存到服务器');}
-    catch(e){if(e.status===409){blocked=true;syncStatus('数据冲突 · 点击查看');toast(e.message);}else if(e.status===401){syncStatus('登录过期 · 请重新登录');showLogin('登录已过期，请重新登录以继续保存。');}else{syncStatus('保存失败 · 点击重试');toast('数据暂未保存，请重试或先导出备份。');}}
+    catch(e){if(e.status===409){blocked=true;syncStatus('数据冲突 · 点击查看');toast(e.message);}else{syncStatus('保存失败 · 点击重试');toast('数据暂未保存，请重试或先导出备份。');}}
     finally{syncPromise=null;}})();return syncPromise;
 }
-function showLogin(message=''){const d=$('#login-dialog');$('#login-error').textContent=message;$('#login-user').value=currentUser||'sunny';$('#login-user').readOnly=dirty;if(!d.open)d.showModal();}
+function showConnectionError(){ready=false;document.body.classList.remove('loading');syncStatus('服务连接失败');$('#view').innerHTML='<section class="panel page-top"><h1>暂时无法连接学习空间</h1><p class="muted">请确认网站服务和数据库已启动，然后重试。</p><button id="retry-connection" class="primary">重新连接</button></section>';$('#retry-connection').onclick=boot;}
 async function loadServer(){const result=await api('/state');state={plans:{},resume:null,...result.state};revision=result.revision;dirty=false;blocked=false;ready=true;if(state.resume){({lesson,section,wordIndex,promptIndex,listenStage}=state.resume);revealed=state.resume.revealed;}document.body.classList.remove('loading');syncStatus('已保存到服务器');render();}
-async function boot(){try{const user=await api('/auth/me');currentUser=user.username;$('#logout').classList.toggle('hidden',!!user.passwordless);await loadServer();}catch(e){showLogin(e.status===401?'':'服务暂时无法连接，请确认后端与 MySQL 已启动。');}}
+async function boot(){try{await api('/profile');await loadServer();}catch{showConnectionError();}}
 function toast(s){$('#toast').textContent=s;$('#toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').style.display='none',3500);}
 function speak(text,slow=false,accent='en-US'){if(!('speechSynthesis'in window)){toast('此浏览器不支持朗读，请使用支持语音的浏览器。');return;}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=accent;u.rate=slow?.72:.9;const voices=speechSynthesis.getVoices(),matched=voices.find(v=>v.lang.replace('_','-').toLowerCase()===accent.toLowerCase()),v=matched||voices.find(v=>/^en[-_]/i.test(v.lang));if(v){u.voice=v;u.lang=v.lang;}if(voices.length&&!matched&&accent==='en-GB')toast('设备暂无英式音色，将使用可用的英语语音。');u.onerror=e=>{if(!['canceled','interrupted'].includes(e.error))toast('语音播放不可用，请检查设备语音设置。');};speechSynthesis.speak(u);}
 function cleanup(){if('speechSynthesis'in window)speechSynthesis.cancel();if(recording?.state==='recording')recording.stop();stream?.getTracks().forEach(t=>t.stop());clearTimeout(recordTimer);if(audioUrl){URL.revokeObjectURL(audioUrl);audioUrl=null;}}
@@ -71,9 +71,6 @@ window.addEventListener('hashchange',()=>{cleanup();if(ready)render();window.scr
 window.addEventListener('beforeunload',e=>{cleanup();if(dirty){e.preventDefault();e.returnValue='';}});
 window.addEventListener('online',()=>{if(dirty&&!blocked)flush();});
 $('#sync-status').onclick=()=>{if(blocked){$('#settings').click();toast('请先导出当前记录，再重新载入服务器记录。');}else flush();};
-$('#login-dialog').addEventListener('cancel',e=>e.preventDefault());
-$('#login-form').onsubmit=async e=>{e.preventDefault();const button=$('#login-submit');button.disabled=true;$('#login-error').textContent='';try{const user=await api('/auth/login',{method:'POST',body:JSON.stringify({username:$('#login-user').value.trim(),password:$('#login-password').value})});const keep=dirty&&user.username===currentUser;currentUser=user.username;if(!keep)await loadServer();$('#login-password').value='';$('#login-dialog').close();if(keep)flush();}catch(err){$('#login-error').textContent=err.message==='Failed to fetch'?'无法连接服务器，请稍后重试。':err.message;}finally{button.disabled=false;}};
-$('#logout').onclick=async()=>{await flush();if(dirty){toast('还有未保存的数据，请先保存或导出。');return;}try{await api('/auth/logout',{method:'POST',body:'{}'});cleanup();ready=false;currentUser=null;$('#preferences').close();document.body.classList.add('loading');showLogin();}catch{toast('退出失败，请重试。');}};
 $('#reload-server').onclick=async()=>{if(dirty&&!window.confirm('当前未同步的更改将被服务器记录替换。请确认已导出需要保留的记录。'))return;try{if(syncPromise)await syncPromise;await loadServer();$('#preferences').close();toast('已载入服务器记录');}catch{toast('载入失败，当前记录仍保留在页面中。');}};
 $('#import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>2*1024*1024)throw Error('文件过大。');const imported=JSON.parse(await file.text());await flush();if(dirty)throw Error('请先处理当前数据的保存问题，再导入。');const result=await api('/state',{method:'PUT',body:JSON.stringify({state:imported,revision})});state={plans:{},resume:null,...imported};revision=result.revision;render();syncStatus('已保存到服务器');toast('记录已导入并保存到服务器');}catch(err){toast(err.message||'导入失败，请选择本站导出的文件。');}e.target.value='';};
 boot();

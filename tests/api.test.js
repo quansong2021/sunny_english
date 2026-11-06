@@ -4,7 +4,25 @@ import { get } from 'node:http';
 import { createApp } from '../backend/http.js';
 import { emptyState,validState } from '../backend/state.js';
 import { hashPassword,verifyPassword } from '../backend/auth.js';
-import { ConflictError } from '../backend/database.js';
+import { ConflictError,initialize } from '../backend/database.js';
+
+test('production passwordless mode reads and saves the existing profile without cookies on any host',async t=>{
+  let state=emptyState(),revision=0;state.done['3-vocab']=true;
+  const store={load:async id=>{assert.equal(id,17);return {state:structuredClone(state),revision};},save:async(id,next,expected)=>{assert.equal(id,17);assert.equal(expected,revision);state=structuredClone(next);return ++revision;}};
+  const server=createApp(store,{passwordlessUser:{id:17,username:'sunny'}});
+  await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>{server.closeAllConnections();server.close(r);}));const base=`http://127.0.0.1:${server.address().port}`;
+  const remote=await new Promise((resolve,reject)=>get(base+'/api/profile',{headers:{Host:'english.example.com'}},r=>{let body='';r.on('data',chunk=>body+=chunk);r.on('end',()=>resolve({status:r.statusCode,body:JSON.parse(body),cookie:r.headers['set-cookie']}));}).on('error',reject));
+  assert.equal(remote.status,200);assert.equal(remote.body.passwordless,true);assert.equal(remote.cookie,undefined);
+  assert.equal((await (await fetch(base+'/api/state')).json()).state.done['3-vocab'],true);
+  state.notes['3']='No login needed.';
+  const saved=await fetch(base+'/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state,revision:0})});assert.equal(saved.status,200);assert.equal((await (await fetch(base+'/api/state')).json()).state.notes['3'],'No login needed.');
+  assert.equal((await (await fetch(base+'/')).text()).includes('id="login-dialog"'),false);
+});
+test('database initialization does not require an app password or replace an existing profile',async()=>{
+  const writes=[];const pool={query:async()=>[[]],execute:async(sql,values)=>{if(sql.startsWith('SELECT id FROM users'))return [[{id:17}]];writes.push({sql,values});return [[]];}};
+  await initialize(pool,{APP_USERNAME:'sunny'});
+  assert.equal(writes.some(w=>/INSERT|UPDATE.*users/i.test(w.sql)),false);
+});
 
 test('local preview opens without a password and only accepts localhost hosts',async t=>{
   const store={load:async()=>({state:emptyState(),revision:0})};
