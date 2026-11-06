@@ -17,10 +17,14 @@
 
 ## 一键部署
 
-先安装并启动 Docker，确保支持 Docker Compose v2 和 Linux 容器。
+先安装并启动 Docker，确保支持 Docker Compose v2 和 Linux 容器。通过 Git 克隆的项目还需要 Git。
 
 - Windows：双击 `deploy-windows.cmd`。
 - Linux：在项目目录运行 `bash deploy-linux.sh`。
+
+在 Git 仓库中，启动脚本会先检查本地修改，再执行 `git pull --ff-only` 拉取当前分支的最新代码，然后加载更新后的部署逻辑，重新构建并启动服务。同步失败或有未提交修改时停止部署，不覆盖本地内容。
+
+使用 ZIP 解压的目录没有 Git 信息时，会提示跳过代码同步并部署当前文件。`.env`、学习记录和备份已被 Git 忽略，保留它们不影响更新。
 
 首次执行自动生成数据库连接密码到 `.env`，启动 MySQL、创建数据库表和个人学习档案，再启动网站。健康检查通过后才会显示 Ready。
 

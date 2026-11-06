@@ -2,7 +2,7 @@
 
 ## 一键启动应用与 MySQL
 
-先安装并启动 Docker Engine / Docker Desktop 与 Docker Compose v2（支持 `up --wait`）。Windows 使用 Linux 容器模式。
+先安装并启动 Docker Engine / Docker Desktop 与 Docker Compose v2（支持 `up --wait`）。Windows 使用 Linux 容器模式。通过 Git 克隆的项目需要安装 Git。
 
 解压整个项目，保留目录结构。
 
@@ -24,7 +24,27 @@ bash deploy-linux.sh start
 
 网页无需账号密码，打开即可使用。`.env` 只需保留给数据库连接及服务配置使用，后续启动不会重新生成数据库密码。Linux 自动将文件权限设为仅当前用户可读写；Windows 使用当前目录权限。不要将真实 `.env` 发给他人或放入代码仓库。
 
-## 从旧版本更新为免密码版
+## 一条命令同步代码并更新
+
+Linux：
+
+```bash
+sudo bash deploy-linux.sh start
+```
+
+Windows：
+
+```powershell
+.\deploy-windows.cmd start
+```
+
+脚本会检查本地修改，执行 `git pull --ff-only`，然后重新加载更新后的部署逻辑、构建并启动服务。它使用当前分支配置的上游分支，不强制覆盖、不自动合并分叉、不自动暂存本地修改。
+
+如果有未提交修改、缺少上游配置、网络失败或分支无法直接更新，脚本会停止，现有服务不受此次启动命令影响。`.env` 等被忽略的文件不计为本地代码修改。
+
+ZIP 解压目录没有 `.git` 时会提示跳过同步，部署解压出的文件。需要自动获取后续更新时，使用 Git 克隆项目。
+
+### 第一次升级旧脚本
 
 在已经克隆的项目目录执行：
 
@@ -33,20 +53,20 @@ git pull --ff-only
 sudo bash deploy-linux.sh start
 ```
 
-更新完成后刷新网页即可，不需要查询登录密码。已有 `.env` 和数据库 volume 都保留，原学习记录继续使用。
+旧脚本还没有自动拉取功能，因此这次先手动拉取一次。以后只需执行 start。更新完成后刷新网页即可，已有 `.env` 和数据库 volume 都保留，原学习记录继续使用，网站无需密码。
 
 ## 常用操作
 
 | 操作 | Windows | Linux |
 | --- | --- | --- |
-| 启动 / 更新代码 | `deploy-windows.cmd start` | `bash deploy-linux.sh start` |
+| 拉取最新代码并构建启动 | `deploy-windows.cmd start` | `bash deploy-linux.sh start` |
 | 停止 | `deploy-windows.cmd stop` | `bash deploy-linux.sh stop` |
 | 重启 | `deploy-windows.cmd restart` | `bash deploy-linux.sh restart` |
 | 查看状态 | `deploy-windows.cmd status` | `bash deploy-linux.sh status` |
 | 查看日志 | `deploy-windows.cmd logs` | `bash deploy-linux.sh logs` |
 | 备份数据库 | `deploy-windows.cmd backup` | `bash deploy-linux.sh backup` |
 
-修改代码或 `.env` 后使用 start，它会重新构建并应用配置；restart 只重启现有容器。修改端口可在 `.env` 设置 `APP_PORT=8080` 后再次 start。
+修改 `.env` 后使用 start，它会同步代码、重新构建并应用配置；restart 只重启现有容器，不拉取代码。自己修改了仓库中的代码时，需要先提交或移走修改，才能运行 start。修改端口可在 `.env` 设置 `APP_PORT=8080` 后再次 start。
 
 旧版 `.env` 中的 `APP_PASSWORD` 已不再使用，可原样保留；不需要删除 `.env` 或重置数据库。`APP_USERNAME` 仅用于定位原来的个人学习档案，默认 sunny。MySQL 初始化密码也只在空数据目录初始化时使用；已有数据时不要重新生成 `.env` 或直接修改数据库密码变量。
 
