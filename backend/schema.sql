@@ -1,0 +1,67 @@
+CREATE TABLE IF NOT EXISTS users (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(64) NOT NULL UNIQUE,
+  password_hash VARCHAR(200) NOT NULL,
+  display_name VARCHAR(30) NOT NULL DEFAULT 'Sunny',
+  daily_goal SMALLINT NOT NULL DEFAULT 40,
+  revision INT UNSIGNED NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sessions (
+  token_hash CHAR(64) PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  expires_at DATETIME NOT NULL,
+  INDEX (expires_at),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS lesson_progress (
+  user_id INT UNSIGNED NOT NULL,
+  step_key VARCHAR(32) NOT NULL,
+  completed BOOLEAN NOT NULL,
+  PRIMARY KEY (user_id, step_key),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS vocabulary_reviews (
+  user_id INT UNSIGNED NOT NULL,
+  word_key VARCHAR(20) NOT NULL,
+  review_level TINYINT NOT NULL,
+  due_ms BIGINT NOT NULL,
+  seen BOOLEAN NOT NULL,
+  PRIMARY KEY (user_id, word_key),
+  INDEX (user_id, due_ms),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS speaking_answers (
+  user_id INT UNSIGNED NOT NULL,
+  prompt_key VARCHAR(20) NOT NULL,
+  answer MEDIUMTEXT NOT NULL,
+  PRIMARY KEY (user_id, prompt_key),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS review_notes (
+  user_id INT UNSIGNED NOT NULL,
+  lesson_key VARCHAR(20) NOT NULL,
+  note MEDIUMTEXT NOT NULL,
+  PRIMARY KEY (user_id, lesson_key),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS study_activity (
+  user_id INT UNSIGNED NOT NULL,
+  study_date DATE NOT NULL,
+  step_key VARCHAR(32) NOT NULL,
+  PRIMARY KEY (user_id, study_date, step_key),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS learning_preferences (
+  user_id INT UNSIGNED PRIMARY KEY,
+  plans JSON NOT NULL,
+  resume_state JSON NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

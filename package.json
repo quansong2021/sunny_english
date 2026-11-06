@@ -1,0 +1,14 @@
+{
+  "name": "sunny-english",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node --env-file=.env backend/server.js",
+    "preview": "node tests/preview-server.js",
+    "test": "node --test tests/*.test.js",
+    "test:mysql": "node --env-file=.env --test tests/mysql.integration.js"
+  },
+  "dependencies": { "mysql2": "^3.15.3" }
+}

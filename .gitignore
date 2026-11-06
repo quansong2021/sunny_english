@@ -1,3 +1,9 @@
 .sites-runtime/
 outputs/
 *.log
+node_modules/
+.env
+.env.*
+!.env.example
+.openai/
+backups/

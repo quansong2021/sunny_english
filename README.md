@@ -1,20 +1,77 @@
 # Sunny English
 
-为 basic 基础的内部 HR 系统与审批流程 QA 定制的学习网站。
+独立部署的个人英语学习网站：JavaScript 前端 + Node.js 后端 + MySQL 8.4。
 
 - 每天 40 分钟：词汇 15、听力 10、口语 10、复习 5。
-- 第一周 7 课、70 张词汇卡、35 个口语问题。
+- 第一个月 30 课：15 课工作英语、15 课日常与出国；30 段对话、60 道听力题、150 个口语问题。
+- 300 个词汇练习位，覆盖 142 个不同词条与短语，后续课程穿插复习前面学过的词。
+- 词条包含词性、常用释义、搭配、双语例句、用法提醒、词形变化与发音入口；首周词条另含英美音标。responsible 另含词族及用法对比。可跳转有道查词。
+- 首页可选择轻量、按计划、状态不错、今天暂缓。30 课始终开放，可提前学后面的课。
+- 轻量建议 20 分钟、5 个词、2 个口语问题；状态不错为 60 分钟，可继续下一课；暂停保留课程位置，恢复时延续之前的节奏。
 - 工作场景含 HR 系统介绍、请假审批、报销表单、权限、审批节点与通知。
-- localStorage 保存学习记录；偏好设置支持导入和导出。
+- MySQL 保存学习进度、单词复习、口语文字回答、笔记和每日记录；支持备份导入和导出。
 - 英语播放使用浏览器 Speech Synthesis；录音使用 MediaRecorder，仅在页面内回听。没有接入 AI 评分。
 - 浏览器首次录音需要用户允许麦克风。录音不会上传。
 
-## 本地打开
+## 一键部署
 
-在此目录运行 `python -m http.server 4178 --bind 127.0.0.1 --directory dist`，访问 http://127.0.0.1:4178。
+先安装并启动 Docker，确保支持 Docker Compose v2 和 Linux 容器。
+
+- Windows：双击 `deploy-windows.cmd`。
+- Linux：在项目目录运行 `bash deploy-linux.sh`。
+
+首次执行自动生成随机密码到 `.env`，启动 MySQL、创建数据库表和个人账号，再启动网站。健康检查通过后才会显示 Ready。
+
+访问 `http://localhost:4178`；服务器部署则使用 `http://服务器IP:4178`。登录账号与密码分别是 `.env` 中的 `APP_USERNAME`、`APP_PASSWORD`。
+
+详细操作见 [部署与 MySQL 说明](DEPLOY.md)。
+
+## 项目结构
+
+```text
+frontend/             页面、课程内容、数据同步交互
+backend/              登录、会话、学习数据接口、MySQL 数据访问
+backend/schema.sql    数据表结构（启动时自动创建）
+deploy/               Windows 脚本与 Nginx HTTPS 配置示例
+tests/                接口检查、MySQL 集成检查、临时 UI 预览
+compose.yaml          应用 + MySQL，数据库持久化到 volume
+deploy-windows.cmd    Windows 一键入口
+deploy-linux.sh       Linux 一键入口
+```
+
+前端与后端独立分目录，由 Node.js 同域提供页面和 API。首周课程在 `frontend/data.js`，后续课程在 `frontend/month-lessons.js`，用户数据在 MySQL 的结构化表中。
+
+词汇详细资料在 `frontend/vocabulary.js` 和 `frontend/month-vocabulary.js`，节奏规则在 `frontend/pacing.js`。释义与例句为课程整理，英美朗读使用设备合成语音，音色取决于设备支持。
+
+## 本地免密预览
+
+安装依赖后执行 `npm run preview`，访问 `http://127.0.0.1:4179`，无需账号密码。
+
+本地预览将记录保存到 `outputs/local-preview-state.json`，刷新和重启会恢复。正式部署仍使用 MySQL。这个本地文件不包含在部署包中。
+
+## 本地开发（已经有 MySQL）
+
+创建数据库与专用账号，按 `.env.example` 填写 `.env`。安装 Node.js 22 或更高版本，执行 `npm ci`、`npm start`，访问 `http://localhost:3000`。
+
+`APP_PASSWORD` 至少 12 个字符，只在账号第一次创建时使用，重新部署不会重置已有密码。
+
+## 接口
+
+| 方法与路径 | 用途 |
+| --- | --- |
+| `GET /api/health` | 服务与数据库健康检查 |
+| `POST /api/auth/login` | 登录，设置 HttpOnly 会话 Cookie |
+| `GET /api/auth/me` | 获取当前账号 |
+| `POST /api/auth/logout` | 退出并使当前会话失效 |
+| `GET /api/state` | 读取个人学习数据与版本号 |
+| `PUT /api/state` | 带版本号保存，冲突返回 409 |
+
+密码使用带盐 scrypt 哈希，会话令牌仅以 SHA-256 摘要入库。数据按账号隔离，每次保存使用数据库事务，多个页面的旧版本不会覆盖较新数据。
 
 ## 内容与检查
 
-课程在 dist/data.js，交互在 dist/app.js，样式在 dist/style.css。无需安装依赖或构建。
+`npm test` 检查数据校验、密码校验、登录权限、账号隔离、保存、冲突和退出，使用内存存储替身。
 
-已验证脚本语法、课程结构、词汇释义切换、听力答题、口语回答刷新后保存、工作课程筛选。语音与麦克风依赖设备支持，未对实际录音或发音质量做验证。
+真实 MySQL 检查：准备独立测试数据库，将 `.env` 的 `DB_NAME` 改为以 `_test` 结尾的库名，再运行 `npm run test:mysql`。检查只清理自己创建的测试账号，不删除数据库。不要对正式学习数据库运行测试。
+
+当前开发机没有 Docker 或 MySQL，未实际启动数据库容器或执行真实 MySQL 检查。UI 联调使用 `tests/preview-server.js` 的本地文件存储，该预览服务不会用于正式部署。语音与录音依赖浏览器和设备支持。

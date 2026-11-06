@@ -1,0 +1,20 @@
+# Install your certificate first. Replace english.example.com and the certificate paths.
+# Set BIND_ADDRESS=127.0.0.1 and COOKIE_SECURE=true in .env, then run the deploy script again.
+server {
+    listen 80;
+    server_name english.example.com;
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name english.example.com;
+    ssl_certificate /etc/letsencrypt/live/english.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/english.example.com/privkey.pem;
+    client_max_body_size 2m;
+    location / {
+        proxy_pass http://127.0.0.1:4178;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
