@@ -8,7 +8,25 @@ const word = new RegExp(`^${lessonId}-[0-9]$`);
 const answer = new RegExp(`^${lessonId}-[0-4]$`);
 const validDate=k=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(k))return false;const d=new Date(k+'T00:00:00Z');return !Number.isNaN(d.getTime())&&d.toISOString().slice(0,10)===k&&k>='1000-01-01';};
 const safeEntries = (x, limit, check) => record(x) && Object.keys(x).length <= limit && Object.entries(x).every(([k,v]) => !['__proto__','constructor','prototype'].includes(k) && check(k,v));
-const pathUnits={intro:{words:13,audio:1},week:{words:12,audio:2},questions:{words:10,audio:2},requests:{words:10,audio:2}};
+const standardPathUnit = { words: 8, audio: 2 };
+const pathUnits = {
+  intro: { words: 13, audio: 1 },
+  week: { words: 12, audio: 2 },
+  questions: { words: 10, audio: 2 },
+  requests: { words: 10, audio: 2 },
+  'meeting-time': { words: 15, audio: 2 },
+  'getting-around': standardPathUnit,
+  'hotel-arrival': standardPathUnit,
+  'ordering-food': standardPathUnit,
+  'reporting-a-bug': standardPathUnit,
+  'airport-check-in': standardPathUnit,
+  'approval-flow': standardPathUnit,
+  'hotel-problem': standardPathUnit,
+  'clarifying-rules': standardPathUnit,
+  'missed-connection': standardPathUnit,
+  'prioritizing-issues': standardPathUnit,
+  handover: standardPathUnit
+};
 const pathSteps=['words','grammar','listening','reading','output','summary'];
 const time=x=>Number.isSafeInteger(x)&&x>=0&&x<=8640000000000000;
 function validPathQuestion(id,key,step){
@@ -18,7 +36,7 @@ function validPathQuestion(id,key,step){
 }
 export function validLearning(p){
   const indices=(v,max)=>Array.isArray(v)&&v.length<=max&&new Set(v).size===v.length&&v.every(i=>Number.isInteger(i)&&i>=0&&i<max);
-  return !!(record(p)&&(p.resume===null||(record(p.resume)&&Object.hasOwn(pathUnits,p.resume.unit)&&pathSteps.includes(p.resume.step)&&(p.resume.question===undefined||validPathQuestion(p.resume.unit,p.resume.question,p.resume.step))))&&safeEntries(p.units,4,(id,u)=>{
+  return !!(record(p)&&(p.resume===null||(record(p.resume)&&Object.hasOwn(pathUnits,p.resume.unit)&&pathSteps.includes(p.resume.step)&&(p.resume.question===undefined||validPathQuestion(p.resume.unit,p.resume.question,p.resume.step))))&&safeEntries(p.units,Object.keys(pathUnits).length,(id,u)=>{
     if(!Object.hasOwn(pathUnits,id)||!record(u))return false;const spec=pathUnits[id];
     return indices(u.seen,spec.words)&&indices(u.spoken,1)&&safeEntries(u.answers,40,(key,a)=>{
       return validPathQuestion(id,key)&&record(a)&&typeof a.value==='string'&&a.value.length<=500&&time(a.at)&&time(a.due)&&Number.isInteger(a.level)&&a.level>=0&&a.level<=5;

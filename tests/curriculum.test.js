@@ -6,14 +6,22 @@ import {emptyState,validState} from '../backend/state.js';
 import {MysqlStore,ConflictError} from '../backend/database.js';
 import {createApp} from '../backend/http.js';
 const context=vm.createContext({});
-vm.runInContext(readFileSync(new URL('../frontend/curriculum.js',import.meta.url),'utf8'),context);
+for (const asset of ['curriculum-units.js', 'curriculum.js']) {
+  vm.runInContext(readFileSync(new URL(`../frontend/${asset}`, import.meta.url), 'utf8'), context);
+}
 const path=vm.runInContext('LearningPath',context),day=86400000;
 const json=x=>JSON.parse(JSON.stringify(x));
 
-test('foundation coverage includes all seven days and every generated exercise can persist',()=>{
+test('all stages include complete weekday and month groups and their exercises can persist',()=>{
   const weekdays=path.units.find(u=>u.id==='week').words.slice(0,7).map(w=>w[0]);
   assert.deepEqual(json(weekdays),['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']);
   const week=path.units.find(u=>u.id==='week');assert.ok(path.questions(week).find(q=>q.id==='l6').options.includes('星期六'));
+  const months = path.units.find(unit => unit.id === 'meeting-time').words.slice(0, 12).map(word => word[0]);
+  assert.deepEqual(json(months), ['January','February','March','April','May','June','July','August','September','October','November','December']);
+  assert.equal(path.stages.length, 4);
+  assert.equal(path.units.length, 16);
+  assert.equal(new Set(path.units.map(unit => unit.id)).size, path.units.length);
+  for (const stage of path.stages) assert.equal(path.units.filter(unit => unit.stage === stage.id).length, 4);
   const s=emptyState();
   for(const u of path.units){
     assert.ok(!u.prerequisite||path.units.findIndex(x=>x.id===u.prerequisite)<path.units.indexOf(u));
@@ -84,9 +92,12 @@ test('passwordless HTTP roundtrip preserves curriculum with old progress; serves
   let saved=emptyState(),revision=0;const store={load:async()=>({state:structuredClone(saved),revision}),save:async(id,s,r)=>{assert.equal(r,revision);saved=structuredClone(s);return ++revision;}};
   const server=createApp(store,{passwordlessUser:{id:17,username:'sunny'}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
   t.after(()=>new Promise(r=>{server.closeAllConnections();server.close(r);}));const base=`http://127.0.0.1:${server.address().port}`;
-  saved.done['30-vocab']=true;const next=structuredClone(saved),u=path.units[1];next.learning.resume={unit:'week',step:'listening',question:'l6'};path.answer(next,u,path.questions(u).find(q=>q.id==='l6'),'星期日',1000);
+  saved.done['30-vocab']=true;const next=structuredClone(saved),u=path.units[1];path.answer(next,u,path.questions(u).find(q=>q.id==='l6'),'星期日',1000);
+  const travel = path.units.find(unit => unit.id === 'missed-connection');
+  next.learning.resume = { unit: travel.id, step: 'listening', question: 'a1' };
+  path.answer(next, travel, path.questions(travel).find(q => q.id === 'a1'), '七点', 1000);
   const response=await fetch(base+'/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:next,revision})});assert.equal(response.status,200);
   assert.deepEqual((await (await fetch(base+'/api/state')).json()).state,json(next));
-  for(const asset of ['curriculum.js','curriculum-ui.js','curriculum.css']){const r=await fetch(base+'/'+asset);assert.equal(r.status,200);assert.ok((await r.text()).length>100);}
+  for(const asset of ['curriculum-units.js','curriculum.js','curriculum-ui.js','curriculum.css']){const r=await fetch(base+'/'+asset);assert.equal(r.status,200);assert.ok((await r.text()).length>100);}
   const invalid=structuredClone(next);invalid.learning.units.week.seen=[99];assert.equal((await fetch(base+'/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:invalid,revision})})).status,400);
 });

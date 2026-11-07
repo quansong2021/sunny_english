@@ -1,7 +1,7 @@
-// Version 1 is a small, complete foundation stage. IDs are stable persistence keys.
+// Unit and question IDs are stable persistence keys.
 const LearningPath = (() => {
   const steps = [['words','课文与词汇'],['grammar','句子与语法'],['listening','听懂信息'],['reading','读懂短文'],['output','自己表达'],['summary','覆盖与复习']];
-  const units = [
+  const foundationUnits = [
     {
       id:'intro', title:'介绍自己和身边的人', goal:'用简单句介绍自己、同事和团队，分清 I / my 与 am / is / are。', prerequisite:null,
       words:[['I','我','I am Sunny.'],['you','你；你们','You are on my team.'],['he','他','He is an engineer.'],['she','她','She is my colleague.'],['it','它','It is a team.'],['we','我们','We are colleagues.'],['they','他们；她们；它们','They are engineers.'],['my','我的','My name is Sunny.'],['your','你的；你们的','Your name is Alex.'],['name','名字','My name is Sunny.'],['engineer','工程师','I am an engineer.'],['colleague','同事','She is my colleague.'],['team','团队','We are a team.']],
@@ -60,10 +60,15 @@ const LearningPath = (() => {
       transfer:['Can you check the form, please?','请帮忙检查这份表单，可以吗？同样的请求结构也能用于日常求助。']
     }
   ];
-  const stages=[
-    {title:'起步 · 能组成简单句',available:true,content:'当前已提供四个完整单元：介绍人物 → 一周安排 → 提问与状态 → 请求与确认。'},
-    {title:'日常 · 能说清时间与经历',available:false,content:'待补充：数字与数量、十二个月、日期与时刻、日常物品、过去与未来、短消息写作。'},
-    {title:'交流 · 能解释和追问',available:false,content:'待补充：原因与条件、比较、讲述经历、工作问题说明、旅行交流和更长的听读材料。'}
+  const units = [
+    ...foundationUnits.map(unit => ({ ...unit, stage: 'foundation', scene: '通用' })),
+    ...ExpandedUnits
+  ];
+  const stages = [
+    { id: 'foundation', title: '01 起步 · 组成简单句', content: '介绍人物、说一周的安排、询问状态、提出请求。' },
+    { id: 'arrange', title: '02 安排 · 约时间和出行', content: '确认月份、日期和时刻，再练约会议、问路、入住和点餐。' },
+    { id: 'handle', title: '03 处理 · 描述经过与问题', content: '用过去时和顺序词说明发生了什么，练缺陷报告、审批流转、值机和住宿反馈。' },
+    { id: 'coordinate', title: '04 协商 · 讨论条件和下一步', content: '澄清规则与边界、比较改签方案、协商缺陷优先级并完成交接。' }
   ];
   const normalize=s=>String(s).toLowerCase().replace(/[’‘]/g,"'").replace(/\bi'm\b/g,'i am').replace(/\bthey're\b/g,'they are').replace(/\bdon't\b/g,'do not').replace(/\bdoesn't\b/g,'does not').replace(/\bcan't\b/g,'cannot').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
   function choices(u,index){const pool=u.choiceGroups?.find(g=>g.includes(index))||u.words.map((_,i)=>i),position=pool.indexOf(index),group=[index,pool[(position+1)%pool.length],pool[(position+pool.length-1)%pool.length]];const rotate=index%3;return [...group.slice(rotate),...group.slice(0,rotate)].map(i=>u.words[i][1]);}
