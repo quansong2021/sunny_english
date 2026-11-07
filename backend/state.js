@@ -9,7 +9,39 @@ const answer = new RegExp(`^${lessonId}-[0-4]$`);
 const validDate=k=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(k))return false;const d=new Date(k+'T00:00:00Z');return !Number.isNaN(d.getTime())&&d.toISOString().slice(0,10)===k&&k>='1000-01-01';};
 const safeEntries = (x, limit, check) => record(x) && Object.keys(x).length <= limit && Object.entries(x).every(([k,v]) => !['__proto__','constructor','prototype'].includes(k) && check(k,v));
 const standardPathUnit = { words: 8, audio: 2 };
+// These bounds mirror the published extension units. The course test checks their saved keys.
+const furtherPathUnits = Object.fromEntries([
+  ['daily-routine', 19, 1],
+  ['dates-and-deadlines', 20, 1],
+  ['shopping-and-paying', 18, 1],
+  ['places-and-directions', 19, 1],
+  ['work-yesterday', 18, 1],
+  ['reproduce-a-defect', 20, 1],
+  ['lost-property', 18, 1],
+  ['while-it-happened', 18, 1],
+  ['exchange-a-purchase', 18, 1],
+  ['future-travel-plans', 18, 1],
+  ['permissions-and-access', 19, 1],
+  ['amount-and-boundaries', 19, 1],
+  ['baggage-and-options', 18, 1],
+  ['test-scope', 18, 1],
+  ['compare-travel-options', 18, 1],
+  ['passive-status-updates', 18, 1],
+  ['hotel-booking-mismatch', 18, 1],
+  ['test-progress', 19, 1],
+  ['complaint-and-remedy', 18, 1],
+  ['resolve-a-disagreement', 18, 1],
+  ['refund-follow-up', 18, 1],
+  ['bug-triage-conversation', 18, 3],
+  ['travel-connection-conversation', 18, 3],
+  ['write-a-work-update', 18, 3],
+  ['change-a-reservation-message', 18, 3],
+  ['handover-with-a-blocker', 18, 3],
+  ['day-trip-change', 18, 3],
+  ['decision-and-meeting-minutes', 18, 3],
+].map(([id, words, spoken]) => [id, { words, spoken, grammar: 2, writing: 0, audio: 0, practice: true }]));
 const pathUnits = {
+  ...furtherPathUnits,
   intro: { words: 13, audio: 1, practice: true },
   'people-and-roles': { words: 12, audio: 2, practice: true },
   'objects-and-articles': { words: 12, audio: 2, practice: true },
@@ -40,15 +72,16 @@ function validPathQuestion(id,key,step){
     return pathUnits[id].practice === true && (!step || step === skill);
   }
   const match=typeof key==='string'&&/^([wlgrao])(\d{1,2})$/.exec(key);if(!match)return false;
-  const spec=pathUnits[id],limit={w:spec.words,l:spec.words,g:4,r:2,a:spec.audio,o:2}[match[1]],skill={w:'words',l:'listening',g:'grammar',r:'reading',a:'listening',o:'output'}[match[1]];
+  const spec=pathUnits[id],limit={w:spec.words,l:spec.words,g:spec.grammar??4,r:2,a:spec.audio,o:spec.writing??2}[match[1]],skill={w:'words',l:'listening',g:'grammar',r:'reading',a:'listening',o:'output'}[match[1]];
   return String(Number(match[2]))===match[2]&&Number(match[2])<limit&&(!step||step===skill);
 }
 export function validLearning(p){
   const indices=(v,max)=>Array.isArray(v)&&v.length<=max&&new Set(v).size===v.length&&v.every(i=>Number.isInteger(i)&&i>=0&&i<max);
   return !!(record(p)&&(p.resume===null||(record(p.resume)&&Object.hasOwn(pathUnits,p.resume.unit)&&pathSteps.includes(p.resume.step)&&(p.resume.question===undefined||validPathQuestion(p.resume.unit,p.resume.question,p.resume.step))))&&safeEntries(p.units,Object.keys(pathUnits).length,(id,u)=>{
     if(!Object.hasOwn(pathUnits,id)||!record(u))return false;const spec=pathUnits[id];
-    const questionCount = 2 * spec.words + 8 + spec.audio + (spec.practice ? 2 : 0);
-    return indices(u.seen,spec.words)&&indices(u.spoken,1)&&safeEntries(u.answers,questionCount,(key,a)=>{
+    if (u.draft !== undefined && (typeof u.draft !== 'string' || u.draft.length > 3000)) return false;
+    const questionCount = 2 * spec.words + (spec.grammar ?? 4) + 2 + (spec.writing ?? 2) + spec.audio + (spec.practice ? 2 : 0);
+    return indices(u.seen,spec.words)&&indices(u.spoken,spec.spoken??1)&&safeEntries(u.answers,questionCount,(key,a)=>{
       return validPathQuestion(id,key)&&record(a)&&typeof a.value==='string'&&a.value.length<=500&&time(a.at)&&time(a.due)&&Number.isInteger(a.level)&&a.level>=0&&a.level<=5
         && (a.variant === undefined || ((key === 'x0' || key === 'x1') && [0, 1].includes(a.variant)));
     });

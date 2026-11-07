@@ -60,7 +60,7 @@ const LearningPath = (() => {
       transfer:['Can you check the form, please?','请帮忙检查这份表单，可以吗？同样的请求结构也能用于日常求助。']
     }
   ];
-  const units = [
+  const existingUnits = [
     ...[foundationUnits[0], ...FoundationAdditions, ...foundationUnits.slice(1)]
       .map(unit => ({ scene: '通用', ...unit, stage: 'foundation' })),
     ...ExpandedUnits.filter(unit => unit.stage === 'arrange'),
@@ -79,6 +79,10 @@ const LearningPath = (() => {
     { id: 'negotiate', title: '05 协商 · 解释与比较', content: '比较影响、说明理由并讨论优先级。' },
     { id: 'exchange', title: '06 应用 · 完成连续交流', content: '练进展交接，逐步补充跨场景综合任务。' }
   ];
+  const units = stages.flatMap(stage => [
+    ...existingUnits.filter(unit => unit.stage === stage.id),
+    ...FurtherUnits.filter(unit => unit.stage === stage.id)
+  ]);
   const normalize=s=>String(s).toLowerCase().replace(/[’‘]/g,"'").replace(/\bi'm\b/g,'i am').replace(/\bthey're\b/g,'they are').replace(/\bdon't\b/g,'do not').replace(/\bdoesn't\b/g,'does not').replace(/\bcan't\b/g,'cannot').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
   function choices(u,index){const pool=u.choiceGroups?.find(g=>g.includes(index))||u.words.map((_,i)=>i),position=pool.indexOf(index),group=[index,pool[(position+1)%pool.length],pool[(position+pool.length-1)%pool.length]];const rotate=index%3;return [...group.slice(rotate),...group.slice(0,rotate)].map(i=>u.words[i][1]);}
   function questions(u){
@@ -89,7 +93,7 @@ const LearningPath = (() => {
       ...u.readingQuiz.map((q,i)=>({id:`r${i}`,skill:'reading',prompt:q[0],options:q[1],answer:q[1][q[2]],why:q[3]})),
       ...u.listeningQuiz.map((q,i)=>({id:`a${i}`,skill:'listening',prompt:q[1],audio:q[0],options:q[2],answer:q[2][q[3]],why:q[4]})),
       ...u.writing.map((q,i)=>({id:`o${i}`,skill:'output',prompt:q[0],accepted:q[1],answer:q[1][0],why:q[2]})),
-      ...(FoundationPractice[u.id] || []).map(([skill, ...forms], index) => {
+      ...(u.practice || FoundationPractice[u.id] || []).map(([skill, ...forms], index) => {
         const variants = forms.map(([prompt, accepted, why, audio]) => ({
           prompt, accepted, answer: accepted[0], why, audio
         }));

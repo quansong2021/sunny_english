@@ -81,6 +81,10 @@ function pathDashboard() {
 
 function pathStageCoverage(stageId) {
   const rows = CourseCoverage.filter(([stage]) => stage === stageId);
+  const linked = new Set(rows.flatMap(([, , lessonIds]) => lessonIds));
+  for (const unit of FurtherUnits) {
+    if (unit.stage === stageId && !linked.has(unit.id)) rows.push([stageId, unit.title, [unit.id], unit.id]);
+  }
   return `<details class="path-stage-coverage">
     <summary>查看本阶段知识覆盖</summary>
     ${rows.map(([, topic, lessonIds, practiceId]) => `<div class="path-rule">
@@ -131,10 +135,13 @@ function pathMap() {
       <h2>课程建设路线</h2>
       <p>先逐步覆盖约 1,200～1,500 个基础词，完整主线目标约 3,000 个核心词，后续扩展到约 5,000 个。搭配和短语另行统计。</p>
       <p class="muted">展开各阶段的知识覆盖，可以查看讲解所在单元和待补内容。</p>
+      <div class="path-unit-actions" aria-label="跳到课程阶段">
+        ${stages.map(stage => `<button class="secondary" data-path-stage-jump="${stage.id}">${stage.title}</button>`).join('')}
+      </div>
     </section>
     ${stages.map(stage => `
-      <section class="panel">
-        <h2>${stage.title}</h2>
+      <section class="panel" aria-labelledby="stage-${stage.id}">
+        <h2 id="stage-${stage.id}" tabindex="-1">${stage.title}</h2>
         <p class="muted">${stage.content}</p>
         ${pathStageCoverage(stage.id)}
         ${pathUnitList(units.filter(unit => unit.stage === stage.id), true)}
@@ -163,7 +170,43 @@ function pathQuestion(u,skill){
 }
 function pathWords(u){const p=LearningPath.progress(state,u);return `<section class="panel path-anchor"><h2>先听读一小段</h2><p class="muted">这一单元围绕下面的短文学习。先听大意，再逐句理解，最后换成自己的信息。</p><div class="path-audio"><button class="primary" data-path-hear="${esc(u.passage[0])}">♫ 听本课短文</button><button class="secondary" data-path-hear="${esc(u.passage[0])}" data-slow="true">慢速听</button></div>${wordSentence(u.passage[0])}<details><summary>看中文帮助理解</summary><p>${u.passage[1]}</p></details></section><section class="panel"><h2>这一组，完整认识</h2><p>${esc(u.pronunciation)}</p><p class="muted">已介绍 ${p.seen.length} / ${u.words.length} 个词。点词可看更多释义；“已介绍”只记录你看过，并不标记掌握。</p><div class="path-word-grid">${u.words.map(([en,zh,example],i)=>`<article><div class="path-word-heading"><button class="sentence-word" data-lookup="${esc(en)}" data-context="${esc(example)}" data-hint="${esc(zh)}">${esc(en)}</button><button class="audio-btn" data-say="${esc(en)}" aria-label="播放 ${esc(en)}">♫</button></div><p>${esc(zh)}</p>${wordSentence(example)}<label class="path-seen"><input type="checkbox" data-path-seen="${i}" ${p.seen.includes(i)?'checked':''}> 已看释义和例句</label></article>`).join('')}</div></section>`+pathQuestion(u,'words');}
 function pathGrammar(u){return `<section class="panel"><h2>知道怎么说，也知道为什么</h2>${u.grammar.map(([title,note,en])=>`<article class="path-rule"><h3>${title}</h3><p>${note}</p>${wordSentence(en)}<button class="audio-btn" data-say="${esc(en)}" aria-label="播放语法例句">♫</button></article>`).join('')}</section>`+pathQuestion(u,'grammar');}
-function pathOutput(u){const p=LearningPath.progress(state,u);return pathQuestion(u,'output')+`<section class="panel"><h2>把句子变成自己的话</h2><p class="muted">先独立说，再打开参考。下方勾选是自评练习记录；系统没有对发音或自由表达自动评分。</p>${u.speaking.map(([prompt,reference,tip],i)=>`<article class="path-rule"><h3>${prompt}</h3><details><summary>看参考表达</summary>${wordSentence(reference)}<button class="secondary" data-say="${esc(reference)}">听参考</button><p>${tip}</p></details><label class="path-seen"><input type="checkbox" data-path-spoken="${i}" ${p.spoken.includes(i)?'checked':''}> 我已脱离参考，尝试换信息表达（自评）</label></article>`).join('')}<div class="actions"><button class="secondary" id="record">● 录下来回听</button><button class="secondary" id="stop-record" disabled>停止录音</button></div><p id="record-status" class="muted">录音仅供当前页面回听，不上传、不保存。</p><audio id="record-audio" class="hidden" controls></audio></section>`;}
+function pathOutput(unit) {
+  const progress = LearningPath.progress(state, unit);
+  const rounds = unit.speaking.map(([prompt, reference, tip, cue], index) => `
+    <article class="path-rule">
+      <h3>${esc(prompt)}</h3>
+      ${cue ? `<button class="secondary" data-say="${esc(cue)}">听对方说 · 第 ${index + 1} 轮</button>
+        <details><summary>看对方说了什么</summary>${wordSentence(cue)}</details>` : ''}
+      <details>
+        <summary>看参考表达</summary>
+        ${wordSentence(reference)}
+        <button class="secondary" data-say="${esc(reference)}">听参考</button>
+        <p>${esc(tip)}</p>
+      </details>
+      <label class="path-seen">
+        <input type="checkbox" data-path-spoken="${index}" ${progress.spoken.includes(index) ? 'checked' : ''}>
+        我已尝试自己表达（自评）
+      </label>
+    </article>`).join('');
+  const draft = unit.draftPrompt ? `<section class="panel">
+    <h2>写一段完整消息</h2>
+    <label class="path-writing-label" for="path-draft">${esc(unit.draftPrompt)}</label>
+    <textarea id="path-draft" rows="5" maxlength="3000" lang="en">${esc(progress.draft || '')}</textarea>
+    <p class="muted">草稿会自动保存。写完后核对事项、时间和下一步。</p>
+  </section>` : '';
+  return pathQuestion(unit, 'output') + draft + `
+    <section class="panel">
+      <h2>${unit.speaking.length > 1 ? '逐轮接话' : '把句子变成自己的话'}</h2>
+      <p class="muted">先独立说，再打开参考。口语练习用录音回听与自评记录。</p>
+      ${rounds}
+      <div class="actions">
+        <button class="secondary" id="record">● 录下来回听</button>
+        <button class="secondary" id="stop-record" disabled>停止录音</button>
+      </div>
+      <p id="record-status" class="muted">录音仅供当前页面回听，不上传、不保存。</p>
+      <audio id="record-audio" class="hidden" controls></audio>
+    </section>`;
+}
 function pathSummary(u){const p=LearningPath.progress(state,u),coverage=LearningPath.coverage(state,u),due=LearningPath.due(state).filter(x=>x.unit.id===u.id),next=LearningPath.units[LearningPath.units.indexOf(u)+1];return `<section class="panel"><h2>${LearningPath.complete(state,u)?'基础练习已完成，继续巩固':'看看还差哪一小步'}</h2><p class="muted">完成练习不等于掌握所有用法。下面分别展示当前答题表现和口语自评。</p><div class="path-coverage">${coverage.map(c=>`<div><div><h3>${c.label}</h3><p>当前答对 ${c.passed} / ${c.total}${c.seen!==null?` · 已介绍 ${c.seen} / ${u.words.length}`:''}${c.spoken!==null?` · 口语自评 ${c.spoken} / ${u.speaking.length}`:''}</p></div>${pathAction(u,c.id,c.complete?'再练一遍':'继续补齐')}</div>`).join('')}</div>${pathTransferPractice(u)}<h3>这一单元的复习</h3><p>${due.length?`${due.length} 个知识点已到复习时间，先做几题就好。`:'暂时没有到期题目。首次答对后，系统会按知识点安排跨天复习。'}</p>${due.length?pathAction(u,due[0].question.skill,'开始复习',due[0].question.id):''}<p class="muted">口语自评不会计入答题正确率，听力也不会因为播放过就自动通过。</p>${next?`<div class="actions">${pathAction(next,'words',LearningPath.complete(state,u)?'进入下一单元':'先看看下一单元')}</div>`:'<p>你已到达学习路线的最后一个单元。可以到学习地图补齐其他练习，或继续复习。</p>'}</section>`;}
 function pathView(){const resume=state.learning?.resume||LearningPath.recommend(state),u=LearningPath.units.find(u=>u.id===(resume.unit?.id||resume.unit))||LearningPath.units[0],step=resume.step||'words',p=LearningPath.units.find(x=>x.id===u.prerequisite),stepIndex=LearningPath.steps.findIndex(s=>s[0]===step);const stage=LearningPath.stages.find(stage=>stage.id===u.stage);return pageHeading(u.title,`${stage.title} · ${u.scene} · ${u.goal}`)+`
   <div class="path-unit-switch" aria-label="选择当前阶段单元">${LearningPath.units.filter(unit=>unit.stage===u.stage).map(unit=>`<button class="${unit.id===u.id?'active':''}" data-path-unit="${unit.id}" data-path-step="words">${LearningPath.units.indexOf(unit)+1}. ${unit.title}</button>`).join('')}<a href="#plan" class="secondary">全部阶段</a></div>
@@ -172,6 +215,13 @@ function pathView(){const resume=state.learning?.resume||LearningPath.recommend(
   <div class="path-learning-layout"><div>${step==='words'?pathWords(u):step==='grammar'?pathGrammar(u):step==='listening'?pathQuestion(u,'listening'):step==='reading'?`<section class="panel"><h2>读一小段</h2>${wordSentence(u.passage[0])}<details><summary>读完再看中文</summary><p>${u.passage[1]}</p></details></section>`+pathQuestion(u,'reading'):step==='output'?pathOutput(u):pathSummary(u)}<div class="path-bottom"><button class="secondary" id="path-pause">暂缓并保留位置</button>${stepIndex<LearningPath.steps.length-1?pathAction(u,LearningPath.steps[stepIndex+1][0],'继续下一步'):''}</div></div><aside><section class="panel"><h3>把基础用起来</h3>${wordSentence(u.transfer[0])}<p class="muted">${u.transfer[1]}</p><button class="secondary" data-say="${esc(u.transfer[0])}">听一遍</button><p class="review-note">一单元可以分多次完成。点击下一步只切换内容，不会自动通过练习。</p><a href="#plan" class="text-link">查看覆盖地图</a></section></aside></div>`;}
 function bindLearningPath(){
   document.querySelectorAll('[data-path-unit]').forEach(b=>b.onclick=()=>pathOpen(b.dataset.pathUnit,b.dataset.pathStep,b.dataset.pathQuestion));
+  for (const button of document.querySelectorAll('[data-path-stage-jump]')) {
+    button.onclick = () => {
+      const heading = document.getElementById('stage-' + button.dataset.pathStageJump);
+      heading?.focus({ preventScroll: true });
+      heading?.scrollIntoView({ block: 'start' });
+    };
+  }
   if(location.hash!=='#learn')return;
   const u=LearningPath.units.find(u=>u.id===state.learning?.resume?.unit)||LearningPath.recommend(state).unit,step=state.learning?.resume?.step||LearningPath.recommend(state).step,key=`${u.id}-${step}`;
   document.querySelectorAll('[data-path-seen]').forEach(b=>b.onchange=()=>{const p=LearningPath.ensure(state,u),n=Number(b.dataset.pathSeen);p.seen=b.checked?[...new Set([...p.seen,n])]:p.seen.filter(i=>i!==n);save();render();});
@@ -180,6 +230,10 @@ function bindLearningPath(){
   const move=index=>{pathQuestionPositions.set(key,Number(index));state.learning||={resume:null,units:{}};state.learning.resume={unit:u.id,step,question:LearningPath.questions(u).filter(q=>q.skill===step)[Number(index)].id};save();cleanup();render();};
   document.querySelectorAll('[data-path-qindex]').forEach(b=>b.onclick=()=>move(b.dataset.pathQindex));
   document.querySelector('#path-qselect')?.addEventListener('change',e=>move(e.target.value));
+  document.querySelector('#path-draft')?.addEventListener('input', event => {
+    LearningPath.ensure(state, u).draft = event.target.value;
+    save();
+  });
   document.querySelector('#path-question')?.addEventListener('submit',e=>{e.preventDefault();const q=LearningPath.questions(u).find(q=>q.id===e.target.dataset.q),value=new FormData(e.target).get('value');LearningPath.answer(state,u,q,value,Date.now(),Number(e.target.dataset.variant));save();render();});
   document.querySelector('#path-pause')?.addEventListener('click',()=>{setMode('pause');location.hash='today';});
 }

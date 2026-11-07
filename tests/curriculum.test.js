@@ -6,7 +6,7 @@ import {emptyState,validState} from '../backend/state.js';
 import {MysqlStore,ConflictError} from '../backend/database.js';
 import {createApp} from '../backend/http.js';
 const context=vm.createContext({});
-for (const asset of ['curriculum-units.js', 'curriculum-foundation.js', 'curriculum.js']) {
+for (const asset of ['curriculum-units.js', 'curriculum-foundation.js', 'curriculum-further.js', 'curriculum.js']) {
   vm.runInContext(readFileSync(new URL(`../frontend/${asset}`, import.meta.url), 'utf8'), context);
 }
 const path=vm.runInContext('LearningPath',context),day=86400000;
@@ -43,10 +43,10 @@ test('all stages include complete weekday and month groups and their exercises c
   const months = path.units.find(unit => unit.id === 'meeting-time').words.slice(0, 12).map(word => word[0]);
   assert.deepEqual(json(months), ['January','February','March','April','May','June','July','August','September','October','November','December']);
   assert.equal(path.stages.length, 6);
-  assert.equal(path.units.length, 20);
+  assert.equal(path.units.length, 48);
   assert.equal(new Set(path.units.map(unit => unit.id)).size, path.units.length);
   assert.equal(path.units.filter(unit => unit.stage === 'foundation').length, 8);
-  for (const stage of path.stages) assert.ok(path.units.some(unit => unit.stage === stage.id));
+  for (const stage of path.stages) assert.equal(path.units.filter(unit => unit.stage === stage.id).length, 8);
   const coverage = vm.runInContext('CourseCoverage', context);
   for (const [stage, , lessonIds, practiceId] of coverage) {
     assert.ok(path.stages.some(item => item.id === stage));
@@ -129,6 +129,6 @@ test('passwordless HTTP roundtrip preserves curriculum with old progress; serves
   path.answer(next, travel, path.questions(travel).find(q => q.id === 'a1'), '七点', 1000);
   const response=await fetch(base+'/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:next,revision})});assert.equal(response.status,200);
   assert.deepEqual((await (await fetch(base+'/api/state')).json()).state,json(next));
-  for(const asset of ['curriculum-units.js','curriculum-foundation.js','curriculum.js','curriculum-ui.js','curriculum.css']){const r=await fetch(base+'/'+asset);assert.equal(r.status,200);assert.ok((await r.text()).length>100);}
+  for(const asset of ['curriculum-units.js','curriculum-foundation.js','curriculum-further.js','curriculum.js','curriculum-ui.js','curriculum.css']){const r=await fetch(base+'/'+asset);assert.equal(r.status,200);assert.ok((await r.text()).length>100);}
   const invalid=structuredClone(next);invalid.learning.units.week.seen=[99];assert.equal((await fetch(base+'/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:invalid,revision})})).status,400);
 });

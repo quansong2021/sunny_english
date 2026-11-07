@@ -6,7 +6,7 @@ import { ConflictError } from './database.js';
 import { wordbank } from './wordbank.js';
 const dummyHash=await hashPassword(newToken());
 const assets=new Map([['/',['index.html','text/html; charset=utf-8']],['/index.html',['index.html','text/html; charset=utf-8']],['/style.css',['style.css','text/css; charset=utf-8']],['/app.js',['app.js','text/javascript; charset=utf-8']],['/data.js',['data.js','text/javascript; charset=utf-8']],['/vocabulary.js',['vocabulary.js','text/javascript; charset=utf-8']]]);
-for(const file of ['month-vocabulary.js','month-lessons.js','pacing.js','wordbank-ui.js','word-topics.js','curriculum-units.js','curriculum-foundation.js','curriculum.js','curriculum-ui.js']) assets.set('/'+file,[file,'text/javascript; charset=utf-8']);
+for(const file of ['month-vocabulary.js','month-lessons.js','pacing.js','wordbank-ui.js','word-topics.js','curriculum-units.js','curriculum-foundation.js','curriculum-further.js','curriculum.js','curriculum-ui.js']) assets.set('/'+file,[file,'text/javascript; charset=utf-8']);
 assets.set('/wordbank.css',['wordbank.css','text/css; charset=utf-8']);
 assets.set('/curriculum.css',['curriculum.css','text/css; charset=utf-8']);
 class HttpError extends Error {constructor(status,message){super(message);this.status=status;}}

@@ -168,16 +168,17 @@ const CourseCoverage = [
   ['arrange','十二个月、日期、时刻和改约',['meeting-time']],
   ['arrange','问路、方向和换乘',['getting-around']],
   ['arrange','入住、退房和点餐',['hotel-arrival','ordering-food']],
-  ['arrange','序数词完整组、时区和数字听辨补强',[]],
+  ['arrange','1～31 日、时间和截止期限',['dates-and-deadlines'],'dates-and-deadlines'],
+  ['arrange','时区换算和更多跨时区沟通',[]],
   ['handle','一般过去时与缺陷报告',['reporting-a-bug']],
   ['handle','描述当前故障、处理住宿问题',['hotel-problem']],
   ['handle','值机及登机信息确认',['airport-check-in']],
-  ['handle','过去时系统对照、过去进行时和失物说明',[]],
+  ['handle','过去时、过去进行时与失物说明',['work-yesterday','while-it-happened','lost-property'],'while-it-happened'],
   ['rules','说明审批顺序、条件和例外',['approval-flow','clarifying-rules']],
   ['rules','改签和备选计划',['missed-connection']],
-  ['rules','将来表达、权限、范围与数量规则',[]],
+  ['rules','将来表达、权限、范围与数量规则',['future-travel-plans','permissions-and-access','test-scope','amount-and-boundaries'],'amount-and-boundaries'],
   ['negotiate','比较影响、说明理由和提出建议',['prioritizing-issues']],
-  ['negotiate','被动表达、投诉、退款和协商的多轮练习',[]],
+  ['negotiate','被动表达、投诉和退款沟通',['passive-status-updates','complaint-and-remedy','refund-follow-up'],'complaint-and-remedy'],
   ['exchange','交接进度、负责人及后续事项',['handover']],
-  ['exchange','完整缺陷沟通、旅行综合任务和邮件写作',[]]
+  ['exchange','三轮缺陷沟通、中转协商和邮件写作',['bug-triage-conversation','travel-connection-conversation','write-a-work-update'],'bug-triage-conversation']
 ];
