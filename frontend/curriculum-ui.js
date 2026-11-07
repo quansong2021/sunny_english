@@ -79,7 +79,7 @@ function pathDashboard() {
     </section>
     <div class="section-heading"><h2>当前阶段的单元</h2><a href="#plan">查看全部阶段</a></div>
     ${pathUnitList(stageUnits)}
-    <div class="path-footnote"><a href="#courses">自由探索：30 课场景练习</a><a href="#words">查词与生词本</a></div>`;
+    <div class="path-footnote"><a href="#courses">自由探索：30 课场景练习</a><a href="#words">查词与生词本</a><a href="#phonetics">练习音标</a></div>`;
 }
 
 function pathStageCoverage(stageId) {
@@ -90,6 +90,7 @@ function pathStageCoverage(stageId) {
   }
   return `<details class="path-stage-coverage">
     <summary>查看本阶段知识覆盖</summary>
+    ${stageId === 'foundation' ? '<p><a href="#phonetics">音标表与易混音听辨</a></p>' : ''}
     ${rows.map(([, topic, lessonIds, practiceId]) => `<div class="path-rule">
       <h3>${esc(topic)}</h3>
       ${lessonIds.length ? `<div class="path-unit-actions">

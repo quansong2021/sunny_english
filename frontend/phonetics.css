@@ -1,0 +1,47 @@
+.sidebar .nav-short { display: none; }
+.phonetic-layout { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; }
+.phonetic-layout > div, .phonetic-chart { min-width: 0; }
+.phonetic-intro p { margin: 6px 0; }
+.phonetic-intro progress { width: min(420px, 100%); accent-color: var(--green); }
+.phonetic-symbol, .phonetic-ipa, .phonetic-group button { font-family: "Segoe UI", "Noto Sans", Arial, sans-serif; }
+.phonetic-symbol { font-size: clamp(42px, 7vw, 72px); color: var(--green); margin: 14px 0; line-height: 1.15; }
+.phonetic-sound p, .phonetic-note p { line-height: 1.7; }
+.phonetic-examples, .phonetic-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.phonetic-examples > div { padding: 13px; background: #f5f8f4; border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.phonetic-examples strong, .phonetic-options strong { font-size: 19px; }
+.phonetic-ipa { color: var(--green); }
+.phonetic-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.phonetic-record { border-top: 1px solid var(--line); padding-top: 14px; }
+.phonetic-record audio { width: 100%; }
+.phonetic-record summary { cursor: pointer; color: var(--green); }
+.phonetic-group { margin-top: 16px; }
+.phonetic-group h3 { font-size: 14px; margin: 0 0 6px; }
+.phonetic-group > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.phonetic-group button {
+  min-width: 48px;
+  min-height: 44px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #f8faf7;
+  color: var(--ink);
+  font-size: 16px;
+}
+.phonetic-group button[aria-pressed="true"] { color: white; background: var(--green); border-color: var(--green); }
+.phonetic-group button span { font-size: 11px; margin-left: 3px; }
+.phonetic-group button:focus-visible, .phonetic-record summary:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.phonetic-quiz { max-width: 620px; }
+.phonetic-pair-label { display: grid; gap: 5px; }
+.phonetic-pair-label select { width: 100%; min-width: 0; }
+.phonetic-options { margin: 14px 0; }
+.phonetic-options button { min-height: 52px; }
+.phonetic-options button:disabled { cursor: default; }
+.phonetic-options button.phonetic-correct { background: #e3f1e5; color: #245a3a; border: 1px solid #7caa85; }
+@media (max-width: 850px) {
+  .phonetic-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}
+@media (max-width: 700px) {
+  .phonetic-record summary { min-height: 44px; }
+  .phonetic-group button { min-width: 44px; }
+  .phonetic-options button { padding-inline: 6px; }
+}

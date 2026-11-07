@@ -78,6 +78,13 @@ function validPathQuestion(id,key,step){
 }
 export function validLearning(p){
   const indices=(v,max)=>Array.isArray(v)&&v.length<=max&&new Set(v).size===v.length&&v.every(i=>Number.isInteger(i)&&i>=0&&i<max);
+  if (p?.phonetics !== undefined) {
+    const phonetics = p.phonetics;
+    if (!record(phonetics) || !indices(phonetics.seen, 44)
+      || !safeEntries(phonetics.results, 16, (key, result) => /^(?:[0-9]|1[0-5])$/.test(key)
+        && record(result) && Number.isSafeInteger(result.attempts) && result.attempts > 0
+        && Number.isSafeInteger(result.correct) && result.correct >= 0 && result.correct <= result.attempts)) return false;
+  }
   return !!(record(p)&&(p.resume===null||(record(p.resume)&&Object.hasOwn(pathUnits,p.resume.unit)&&pathSteps.includes(p.resume.step)&&(p.resume.question===undefined||validPathQuestion(p.resume.unit,p.resume.question,p.resume.step))))&&safeEntries(p.units,Object.keys(pathUnits).length,(id,u)=>{
     if(!Object.hasOwn(pathUnits,id)||!record(u))return false;const spec=pathUnits[id];
     if (u.draft !== undefined && (typeof u.draft !== 'string' || u.draft.length > 3000)) return false;

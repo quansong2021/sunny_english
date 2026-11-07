@@ -12,6 +12,27 @@ for (const asset of ['curriculum-units.js', 'curriculum-foundation.js', 'curricu
 const path=vm.runInContext('LearningPath',context),day=86400000;
 const json=x=>JSON.parse(JSON.stringify(x));
 
+test('phonetic chart and listening pairs match the saved progress limits', () => {
+  vm.runInContext(readFileSync(new URL('../frontend/phonetics.js', import.meta.url), 'utf8'), context);
+  const { entries, pairs } = vm.runInContext('Phonetics', context);
+  const sounds = new Set(entries.map(([, symbol]) => symbol));
+  assert.equal(sounds.size, 44);
+  assert.equal(entries.length, sounds.size);
+  for (const [, sound, , , firstIpa, , , secondIpa] of entries) {
+    assert.ok(firstIpa.includes(sound) && secondIpa.includes(sound), sound);
+  }
+  const saved = emptyState();
+  saved.learning.phonetics = { seen: entries.map((_, index) => index), results: {} };
+  for (const [index, [first, second, wordA, wordB]] of pairs.entries()) {
+    assert.ok(sounds.has(first) && sounds.has(second) && wordA !== wordB);
+    saved.learning.phonetics.results[index] = { attempts: 2, correct: 1 };
+  }
+  assert.equal(pairs.length, 16);
+  assert.ok(validState(saved));
+  saved.learning.phonetics.results[0].correct = 3;
+  assert.equal(validState(saved), false);
+});
+
 test('skipping words preserves existing answers and advances to grammar until restored', () => {
   const state = emptyState();
   const unit = path.units[0];
@@ -185,8 +206,9 @@ test('passwordless HTTP roundtrip preserves curriculum with old progress; serves
   const travel = path.units.find(unit => unit.id === 'missed-connection');
   next.learning.resume = { unit: travel.id, step: 'listening', question: 'a1' };
   path.answer(next, travel, path.questions(travel).find(q => q.id === 'a1'), '七点', 1000);
+  next.learning.phonetics = { seen: [0, 43], results: { 15: { attempts: 1, correct: 1 } } };
   const response=await fetch(base+'/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:next,revision})});assert.equal(response.status,200);
   assert.deepEqual((await (await fetch(base+'/api/state')).json()).state,json(next));
-  for(const asset of ['curriculum-units.js','curriculum-foundation.js','curriculum-further.js','curriculum.js','curriculum-ui.js','curriculum.css','mobile.css']){const r=await fetch(base+'/'+asset);assert.equal(r.status,200);assert.ok((await r.text()).length>100);}
+  for(const asset of ['curriculum-units.js','curriculum-foundation.js','curriculum-further.js','curriculum.js','curriculum-ui.js','curriculum.css','mobile.css','phonetics.js','phonetics.css']){const r=await fetch(base+'/'+asset);assert.equal(r.status,200);assert.ok((await r.text()).length>100);}
   const invalid=structuredClone(next);invalid.learning.units.week.seen=[99];assert.equal((await fetch(base+'/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:invalid,revision})})).status,400);
 });

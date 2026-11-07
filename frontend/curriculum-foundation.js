@@ -164,7 +164,7 @@ const CourseCoverage = [
   ['foundation','0～100、编号、金额和数量',['numbers-to-ten','numbers-and-amounts'],'numbers-and-amounts'],
   ['foundation','星期七天、现在时肯定句及第三人称',['week'],'week'],
   ['foundation','状态、现在时的否定和提问、can 请求',['questions','requests'],'requests'],
-  ['foundation','音节、重音和常见音素的系统练习',[]],
+  ['foundation','音节、句子重音与连读的进阶练习',[]],
   ['arrange','十二个月、日期、时刻和改约',['meeting-time']],
   ['arrange','问路、方向和换乘',['getting-around']],
   ['arrange','入住、退房和点餐',['hotel-arrival','ordering-food']],
