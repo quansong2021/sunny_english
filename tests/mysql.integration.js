@@ -11,6 +11,7 @@ test('real MySQL round trip, transaction conflict, and account isolation',async(
     const original=await store.load(user.id);assert.equal(original.revision,0);
     const state=emptyState();state.name='测试 🌱';state.goal=20;state.done['3-vocab']=true;state.words['3-0']={level:1,due:1900000000000,seen:true};state.answers['3-0']='I test HR systems.';state.notes['3']='审批人';state.activity['2026-11-05']=['3-vocab'];state.plans['2026-11-05']={mode:'pause',minutes:{'3-vocab':8}};state.resume={lesson:30,section:'review',wordIndex:9,promptIndex:4,listenStage:2,revealed:true};
     state.savedWords.unique={addedAt:1900000000000,meaning:'独特的',sentence:'The employee ID should be unique.'};
+    state.learning={resume:{unit:'week',step:'listening'},units:{week:{seen:[0,6],spoken:[],answers:{l6:{value:'星期日',at:1900000000000,level:1,due:1900086400000}}}}};
     assert.equal(await store.save(user.id,state,0),1);assert.deepEqual(await store.load(user.id),{state,revision:1});
     await assert.rejects(store.save(user.id,emptyState(),0),ConflictError);assert.deepEqual(await store.load(user.id),{state,revision:1});
     await store.save(user.id,emptyState(),1);assert.deepEqual(await store.load(user.id),{state:emptyState(),revision:2});

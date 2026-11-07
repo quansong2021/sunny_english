@@ -3,9 +3,23 @@ import assert from 'node:assert/strict';
 import { wordbank,seedWordbank,wordbankVersion } from '../backend/wordbank.js';
 import { createApp } from '../backend/http.js';
 import { emptyState,validState } from '../backend/state.js';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+test('graded topics cover weekdays, months and every listed word can be looked up',()=>{
+  const context=vm.createContext({});vm.runInContext(readFileSync(new URL('../frontend/word-topics.js',import.meta.url),'utf8')+';this.topics=WordTopics',context);const topics=context.topics;
+  assert.equal(topics.length,16);assert.equal(topics.find(t=>t.id==='weekdays').words.length,7);assert.equal(topics.find(t=>t.id==='months').words.length,12);
+  assert.deepEqual([...new Set(topics.map(t=>t.level))],[1,2,3]);
+  for(const topic of topics){assert.ok(topic.note&&topic.example.length===2);for(const [word,meaning]of topic.words){assert.ok(meaning);assert.ok(wordbank.lookup(word),word);}}
+  assert.ok(wordbank.lookup('May').senses.some(s=>s.includes('五月')));assert.ok(wordbank.lookup('Thursday').senses.some(s=>s.includes('四')));
+});
+test('the complete expanded bank is seeded before its version is marked ready',async()=>{
+  let count=0,marked=false,committed=false;
+  const connection={beginTransaction:async()=>{},query:async(sql,[rows])=>{assert.ok(rows.length<=200);count+=rows.length;},execute:async(sql,[key,version])=>{assert.equal(count,wordbank.search().total);assert.equal(version,wordbankVersion);marked=true;},commit:async()=>{assert.equal(marked,true);committed=true;},rollback:async()=>{},release(){}};
+  await seedWordbank({execute:async()=>[[]],getConnection:async()=>connection});assert.equal(committed,true);
+});
 test('wordbank includes common words, course detail, contractions and inflected forms',()=>{
-  assert.ok(wordbank.search().total>=5000);
-  for(const word of ['the','is','testing','approved','colleagues',"I'm",'responsible'])assert.ok(wordbank.lookup(word),word);
+  assert.ok(wordbank.search().total>=100000);
+  for(const word of ['the','is','testing','approved','colleagues',"I'm",'responsible','contingency','interoperability','reconciliation','ergonomics','restructuring'])assert.ok(wordbank.lookup(word),word);
   assert.ok(wordbank.lookup('responsible').detail.collocations.length>=3);
   assert.equal(wordbank.lookup('RESPONSIBLE').word,'responsible');assert.equal(wordbank.lookup('<script>'),null);
   assert.equal(wordbank.search('',40,40).items.length,40);assert.notEqual(wordbank.search().items[0].word,wordbank.search('',40,40).items[0].word);

@@ -1,8 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-const raw=await readFile(new URL('./data/wordbank.json',import.meta.url),'utf8');
+import { gunzipSync } from 'node:zlib';
+let raw=gunzipSync(await readFile(new URL('./data/wordbank.json.gz',import.meta.url))).toString('utf8');
 const dataset=JSON.parse(raw),entries=dataset.entries,map=new Map(entries.map(e=>[e.word,e])),aliases=new Map();
 export const wordbankVersion=createHash('sha256').update(raw).digest('hex');
+raw=null;
 const normalize=s=>String(s||'').normalize('NFKC').replaceAll('’',"'").trim().toLowerCase();
 for(const e of entries)for(const change of (e.exchange||'').split('/')){const [type,forms]=change.split(':');if(!['p','d','i','3','s','r','t'].includes(type))continue;for(const form of (forms||'').split(',')){const key=normalize(form);if(/^[a-z]+(?:['-][a-z]+)*$/.test(key)&&!aliases.has(key))aliases.set(key,e.word);}}
 export const wordbank={

@@ -26,7 +26,7 @@ EOF
 fi
 compose=(docker compose --env-file .env -f compose.yaml)
 case "$action" in
-  start) "${compose[@]}" up -d --build --wait --wait-timeout 180 ;;
+  start) "${compose[@]}" up -d --build --wait --wait-timeout 900 ;;
   stop) "${compose[@]}" stop ;;
   restart) "${compose[@]}" restart ;;
   status) "${compose[@]}" ps ;;

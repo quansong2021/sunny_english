@@ -24,7 +24,7 @@ try {
   }
   $composeArgs=@('compose','--env-file','.env','-f','compose.yaml')
   switch ($Action) {
-    'start' { & docker @composeArgs up -d --build --wait --wait-timeout 180 }
+    'start' { & docker @composeArgs up -d --build --wait --wait-timeout 900 }
     'stop' { & docker @composeArgs stop }
     'restart' { & docker @composeArgs restart }
     'status' { & docker @composeArgs ps }

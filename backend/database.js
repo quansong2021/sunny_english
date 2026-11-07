@@ -38,6 +38,7 @@ export class MysqlStore {
       const [preferences]=await c.execute('SELECT plans,resume_state FROM learning_preferences WHERE user_id=?',[userId]);
       if(preferences.length){const p=preferences[0];s.plans=typeof p.plans==='string'?JSON.parse(p.plans):p.plans;s.resume=typeof p.resume_state==='string'?JSON.parse(p.resume_state):p.resume_state;}
       const [saved]=await c.execute('SELECT word,entry_json FROM saved_words WHERE user_id=?',[userId]);for(const row of saved)s.savedWords[row.word]=typeof row.entry_json==='string'?JSON.parse(row.entry_json):row.entry_json;
+      const [learning]=await c.execute('SELECT progress FROM curriculum_progress WHERE user_id=?',[userId]);if(learning.length)s.learning=typeof learning[0].progress==='string'?JSON.parse(learning[0].progress):learning[0].progress;
       await c.commit();return {state:s,revision:u.revision};
     }catch(e){await c.rollback();throw e;}finally{c.release();}
   }
@@ -51,6 +52,8 @@ export class MysqlStore {
       await c.execute('DELETE FROM learning_preferences WHERE user_id=?',[userId]);
       await c.execute('INSERT INTO learning_preferences(user_id,plans,resume_state) VALUES (?,?,?)',[userId,JSON.stringify(s.plans||{}),s.resume?JSON.stringify(s.resume):null]);
       await c.execute('DELETE FROM saved_words WHERE user_id=?',[userId]);const saved=Object.entries(s.savedWords||{}).map(([word,entry])=>[userId,word,JSON.stringify(entry)]);for(let i=0;i<saved.length;i+=200)await c.query('INSERT INTO saved_words(user_id,word,entry_json) VALUES ?',[saved.slice(i,i+200)]);
+      await c.execute('DELETE FROM curriculum_progress WHERE user_id=?',[userId]);
+      await c.execute('INSERT INTO curriculum_progress(user_id,progress) VALUES (?,?)',[userId,JSON.stringify(s.learning||{resume:null,units:{}})]);
       await c.commit();return revision+1;
     }catch(e){await c.rollback();throw e;}finally{c.release();}
   }
