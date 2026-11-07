@@ -64,6 +64,7 @@ const pathUnits = {
   handover: standardPathUnit
 };
 const pathSteps=['words','grammar','listening','reading','output','summary'];
+const skippableSteps = pathSteps.filter(step => step !== 'summary');
 const time=x=>Number.isSafeInteger(x)&&x>=0&&x<=8640000000000000;
 function validPathQuestion(id,key,step){
   if (!Object.hasOwn(pathUnits, id)) return false;
@@ -81,6 +82,11 @@ export function validLearning(p){
     if(!Object.hasOwn(pathUnits,id)||!record(u))return false;const spec=pathUnits[id];
     if (u.draft !== undefined && (typeof u.draft !== 'string' || u.draft.length > 3000)) return false;
     if (u.wordsSkipped !== undefined && typeof u.wordsSkipped !== 'boolean') return false;
+    if (u.skippedSteps !== undefined && (!Array.isArray(u.skippedSteps) || u.skippedSteps.length > skippableSteps.length
+      || new Set(u.skippedSteps).size !== u.skippedSteps.length || !u.skippedSteps.every(step => skippableSteps.includes(step)))) return false;
+    if (u.skippedQuestions !== undefined && (!Array.isArray(u.skippedQuestions) || u.skippedQuestions.length > 2
+      || new Set(u.skippedQuestions).size !== u.skippedQuestions.length
+      || !u.skippedQuestions.every(key => (key === 'x0' || key === 'x1') && validPathQuestion(id, key)))) return false;
     const questionCount = 2 * spec.words + (spec.grammar ?? 4) + 2 + (spec.writing ?? 2) + spec.audio + (spec.practice ? 2 : 0);
     return indices(u.seen,spec.words)&&indices(u.spoken,spec.spoken??1)&&safeEntries(u.answers,questionCount,(key,a)=>{
       return validPathQuestion(id,key)&&record(a)&&typeof a.value==='string'&&a.value.length<=500&&time(a.at)&&time(a.due)&&Number.isInteger(a.level)&&a.level>=0&&a.level<=5

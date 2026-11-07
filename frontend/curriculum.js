@@ -114,6 +114,10 @@ const LearningPath = (() => {
     return { question: { ...question, ...question.variants[variant] }, entry: review ? undefined : entry, variant };
   }
   function progress(state,u){return state.learning?.units?.[u.id]||{seen:[],answers:{},spoken:[]};}
+  function stepSkipped(entry, step) {
+    return entry.skippedSteps?.includes(step) || (step === 'words' && entry.wordsSkipped === true);
+  }
+  const questionSkipped = (entry, id) => entry.skippedQuestions?.includes(id) === true;
   function coverage(state, unit) {
     const entry = progress(state, unit);
     const unitQuestions = questions(unit);
@@ -122,29 +126,45 @@ const LearningPath = (() => {
       const count = selected.filter(question => passed(question, entry.answers[question.id])).length;
       const seen = id === 'words' ? entry.seen.length : null;
       const spoken = id === 'output' ? entry.spoken.length : null;
-      const complete = count === selected.length
-        && (seen === null || seen === unit.words.length)
+      const activitiesDone = (seen === null || seen === unit.words.length)
         && (spoken === null || spoken === unit.speaking.length);
+      const complete = count === selected.length && activitiesDone;
+      const skipped = stepSkipped(entry, id);
+      const skippedCount = selected.filter(question => questionSkipped(entry, question.id)).length;
+      const ready = skipped || (activitiesDone && selected.every(question =>
+        passed(question, entry.answers[question.id]) || questionSkipped(entry, question.id)));
       return {
         id, label, passed: count, total: selected.length, seen, spoken, complete,
-        skipped: id === 'words' && entry.wordsSkipped === true && !complete
+        skipped, skippedCount, ready
       };
     });
   }
   const complete=(s,u)=>coverage(s,u).every(c=>c.complete);
-  const nextStep = (state, unit) => coverage(state, unit).find(item => !item.complete && !item.skipped)?.id;
-  function setWordsSkipped(state, unit, skipped) {
-    const words = coverage(state, unit).find(item => item.id === 'words');
-    if (skipped) {
-      if (words.skipped || words.complete) return false;
-      ensure(state, unit).wordsSkipped = true;
-      if (state.learning.resume?.unit === unit.id && state.learning.resume.step === 'words') {
-        state.learning.resume = { unit: unit.id, step: nextStep(state, unit) || 'summary' };
-      }
-    } else {
-      const entry = progress(state, unit);
-      if (!entry.wordsSkipped) return false;
-      delete entry.wordsSkipped;
+  const nextStep = (state, unit) => coverage(state, unit).find(item => !item.ready)?.id;
+  function setStepSkipped(state, unit, step, skipped) {
+    if (step === 'summary' || !steps.some(([id]) => id === step)) return false;
+    if (Boolean(stepSkipped(progress(state, unit), step)) === skipped) return false;
+    const entry = ensure(state, unit);
+    const selected = new Set(entry.skippedSteps);
+    if (step === 'words') delete entry.wordsSkipped;
+    if (skipped) selected.add(step);
+    else selected.delete(step);
+    entry.skippedSteps = [...selected];
+    if (skipped && state.learning.resume?.unit === unit.id && state.learning.resume.step === step) {
+      state.learning.resume = { unit: unit.id, step: nextStep(state, unit) || 'summary' };
+    }
+    return true;
+  }
+  function setQuestionSkipped(state, unit, id, skipped) {
+    const question = questions(unit).find(question => question.id === id && question.variants);
+    if (!question || questionSkipped(progress(state, unit), id) === skipped) return false;
+    const entry = ensure(state, unit);
+    const selected = new Set(entry.skippedQuestions);
+    if (skipped) selected.add(id);
+    else selected.delete(id);
+    entry.skippedQuestions = [...selected];
+    if (skipped && state.learning.resume?.unit === unit.id && state.learning.resume.question === id) {
+      state.learning.resume = { unit: unit.id, step: nextStep(state, unit) || 'summary' };
     }
     return true;
   }
@@ -153,7 +173,7 @@ const LearningPath = (() => {
       const entry = progress(state, unit);
       return questions(unit)
         .filter(question => entry.answers[question.id]?.due <= now
-          && !(entry.wordsSkipped && question.skill === 'words'))
+          && !stepSkipped(entry, question.skill) && !questionSkipped(entry, question.id))
         .map(question => ({ unit, question, entry: entry.answers[question.id] }));
     }).sort((a, b) => a.entry.due - b.entry.due);
   }
@@ -164,7 +184,8 @@ const LearningPath = (() => {
       const next = nextStep(state, resumed);
       if (next) {
         const { step, question } = state.learning.resume;
-        if (step === 'words' && progress(state, resumed).wordsSkipped) {
+        const entry = progress(state, resumed);
+        if (stepSkipped(entry, step) || questionSkipped(entry, question)) {
           return { unit: resumed, step: next, review: false };
         }
         return { unit: resumed, step, question, review: false };
@@ -180,5 +201,5 @@ const LearningPath = (() => {
     const level=ok?(sameWindow?old.level:Math.min((old?.level||0)+1,5)):0;
     p.answers[q.id]={value,at:now,level,due:ok?(sameWindow?old.due:now+[1,3,7,14,30][level-1]*86400000):now,...(q.variants?{variant}:{})};return ok;
   }
-  return {units,steps,stages,normalize,questions,correct,passed,exercise,progress,coverage,complete,nextStep,setWordsSkipped,due,recommend,ensure,answer};
+  return {units,steps,stages,normalize,questions,correct,passed,exercise,progress,coverage,complete,nextStep,stepSkipped,questionSkipped,setStepSkipped,setQuestionSkipped,due,recommend,ensure,answer};
 })();

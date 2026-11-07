@@ -21,8 +21,8 @@ test('skipping words preserves existing answers and advances to grammar until re
   path.answer(state, unit, word, word.answer, start);
   path.ensure(state, unit).seen = [0];
   const saved = json(path.progress(state, unit).answers);
-  assert.equal(path.setWordsSkipped(state, unit, true), true);
-  assert.equal(path.setWordsSkipped(state, unit, true), false);
+  assert.equal(path.setStepSkipped(state, unit, 'words', true), true);
+  assert.equal(path.setStepSkipped(state, unit, 'words', true), false);
   assert.equal(path.coverage(state, unit)[0].skipped, true);
   assert.equal(path.coverage(state, unit)[0].complete, false);
   assert.equal(path.recommend(state, start + day).step, 'grammar');
@@ -31,10 +31,39 @@ test('skipping words preserves existing answers and advances to grammar until re
   assert.ok(validState(restored));
   assert.deepEqual(restored.learning.units[unit.id].answers, saved);
   assert.deepEqual(restored.learning.units[unit.id].seen, [0]);
-  assert.equal(path.setWordsSkipped(restored, unit, false), true);
+  // Old saves used a standalone word-skip flag.
+  delete restored.learning.units[unit.id].skippedSteps;
+  restored.learning.units[unit.id].wordsSkipped = true;
+  assert.ok(validState(restored));
+  assert.equal(path.setStepSkipped(restored, unit, 'words', false), true);
   assert.equal(path.due(restored, start + day)[0].question.id, word.id);
   restored.learning.units[unit.id].wordsSkipped = 'yes';
   assert.equal(validState(restored), false);
+});
+
+test('skipped sections and transfer questions leave the original answers intact', () => {
+  const state = emptyState();
+  const unit = path.units[0];
+  const listening = path.questions(unit).filter(question => question.skill === 'listening');
+  const transfer = listening.find(question => question.variants);
+  const start = 1900000000000;
+  for (const question of listening) path.answer(state, unit, question, question.answer, start);
+  const saved = json(path.progress(state, unit).answers);
+  assert.ok(path.setStepSkipped(state, unit, 'grammar', true));
+  assert.ok(path.setStepSkipped(state, unit, 'reading', true));
+  assert.ok(path.setQuestionSkipped(state, unit, transfer.id, true));
+  assert.equal(path.due(state, start + day).some(item => item.question.id === transfer.id), false);
+  assert.ok(path.setStepSkipped(state, unit, 'listening', true));
+  assert.equal(path.due(state, start + day).length, 0);
+  assert.ok(path.setStepSkipped(state, unit, 'listening', false));
+  assert.equal(path.due(state, start + day).length, listening.length - 1);
+  assert.ok(path.setQuestionSkipped(state, unit, transfer.id, false));
+  assert.equal(path.due(state, start + day).length, listening.length);
+  assert.deepEqual(json(path.progress(state, unit).answers), saved);
+  assert.equal(path.coverage(state, unit).find(item => item.id === 'grammar').complete, false);
+  assert.ok(validState(json(state)));
+  assert.equal(path.setStepSkipped(state, unit, 'summary', true), false);
+  assert.equal(path.setQuestionSkipped(state, unit, 'g0', true), false);
 });
 
 test('a due transfer exercise changes the task and checks the saved variant after reload', () => {
