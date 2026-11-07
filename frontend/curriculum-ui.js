@@ -299,8 +299,23 @@ function pathSummary(unit) {
       : '<p>这是学习路线的最后一个单元。可以到学习地图补齐其他练习，或继续复习。</p>'}
   </section>`;
 }
+function pathUnitNavigation(current) {
+  const units = LearningPath.units.filter(unit => unit.stage === current.stage);
+  const label = unit => `${LearningPath.units.indexOf(unit) + 1}. ${unit.title}`;
+  return `<div class="path-unit-switch" aria-label="选择当前阶段单元">
+    ${units.map(unit => `<button class="${unit.id === current.id ? 'active' : ''}" data-path-unit="${unit.id}" data-path-step="words">${label(unit)}</button>`).join('')}
+    <a href="#plan" class="secondary">全部阶段</a>
+  </div>
+  <div class="path-unit-mobile">
+    <label>切换单元<select id="path-unit-select">
+      ${units.map(unit => `<option value="${unit.id}" ${unit.id === current.id ? 'selected' : ''}>${label(unit)}</option>`).join('')}
+    </select></label>
+    <a href="#plan" class="secondary">学习地图</a>
+  </div>`;
+}
+
 function pathView(){const resume=state.learning?.resume||LearningPath.recommend(state),u=LearningPath.units.find(u=>u.id===(resume.unit?.id||resume.unit))||LearningPath.units[0],step=resume.step||'words',p=LearningPath.units.find(x=>x.id===u.prerequisite),stepIndex=LearningPath.steps.findIndex(s=>s[0]===step);const nextSection=LearningPath.steps.slice(stepIndex+1).find(([id])=>!LearningPath.stepSkipped(LearningPath.progress(state,u),id));const stage=LearningPath.stages.find(stage=>stage.id===u.stage);return pageHeading(u.title,`${stage.title} · ${u.scene} · ${u.goal}`)+`
-  <div class="path-unit-switch" aria-label="选择当前阶段单元">${LearningPath.units.filter(unit=>unit.stage===u.stage).map(unit=>`<button class="${unit.id===u.id?'active':''}" data-path-unit="${unit.id}" data-path-step="words">${LearningPath.units.indexOf(unit)+1}. ${unit.title}</button>`).join('')}<a href="#plan" class="secondary">全部阶段</a></div>
+  ${pathUnitNavigation(u)}
   ${p&&LearningPath.nextStep(state,p)?`<p class="path-prerequisite">这一单元会用到“${p.title}”的基础。${pathAction(p,'summary','查看前置练习')}</p>`:''}
   <div class="tabs path-step-tabs" aria-label="单元学习步骤">${LearningPath.steps.map(([id,label])=>`<button class="${step===id?'active':''}" data-path-unit="${u.id}" data-path-step="${id}">${label}</button>`).join('')}</div>
   <div class="path-learning-layout"><div>${step==='words'?pathWords(u):step==='grammar'?pathGrammar(u):step==='listening'?pathQuestion(u,'listening'):step==='reading'?`<section class="panel"><h2>读一小段</h2>${wordSentence(u.passage[0])}<details><summary>读完再看中文</summary><p>${u.passage[1]}</p></details></section>`+pathQuestion(u,'reading'):step==='output'?pathOutput(u):pathSummary(u)}<div class="path-bottom"><button class="secondary" id="path-pause">暂缓并保留位置</button>${nextSection?pathAction(u,nextSection[0],'继续下一步'):''}</div></div><aside><section class="panel"><h3>把基础用起来</h3>${wordSentence(u.transfer[0])}<p class="muted">${u.transfer[1]}</p><button class="secondary" data-say="${esc(u.transfer[0])}">听一遍</button><p class="review-note">一单元可以分多次完成。点击下一步只切换内容，不会自动通过练习。</p><a href="#plan" class="text-link">查看覆盖地图</a></section></aside></div>`;}
@@ -367,6 +382,9 @@ function bindLearningPath(){
   }
   if(location.hash!=='#learn')return;
   const u=LearningPath.units.find(u=>u.id===state.learning?.resume?.unit)||LearningPath.recommend(state).unit,step=state.learning?.resume?.step||LearningPath.recommend(state).step,key=`${u.id}-${step}`;
+  document.querySelector('#path-unit-select')?.addEventListener('change', event => {
+    pathOpen(event.target.value);
+  });
   const batch = document.querySelector('#path-unit-batch');
   if (batch) {
     bindPathBatchSelect(batch);

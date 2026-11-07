@@ -9,6 +9,7 @@ const assets=new Map([['/',['index.html','text/html; charset=utf-8']],['/index.h
 for(const file of ['month-vocabulary.js','month-lessons.js','pacing.js','wordbank-ui.js','word-topics.js','curriculum-units.js','curriculum-foundation.js','curriculum-further.js','curriculum.js','curriculum-ui.js']) assets.set('/'+file,[file,'text/javascript; charset=utf-8']);
 assets.set('/wordbank.css',['wordbank.css','text/css; charset=utf-8']);
 assets.set('/curriculum.css',['curriculum.css','text/css; charset=utf-8']);
+assets.set('/mobile.css',['mobile.css','text/css; charset=utf-8']);
 class HttpError extends Error {constructor(status,message){super(message);this.status=status;}}
 async function jsonBody(req){
   if(!(req.headers['content-type']||'').startsWith('application/json'))throw new HttpError(415,'请使用 JSON 请求。');

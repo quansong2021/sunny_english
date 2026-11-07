@@ -183,6 +183,6 @@ test('passwordless HTTP roundtrip preserves curriculum with old progress; serves
   path.answer(next, travel, path.questions(travel).find(q => q.id === 'a1'), '七点', 1000);
   const response=await fetch(base+'/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:next,revision})});assert.equal(response.status,200);
   assert.deepEqual((await (await fetch(base+'/api/state')).json()).state,json(next));
-  for(const asset of ['curriculum-units.js','curriculum-foundation.js','curriculum-further.js','curriculum.js','curriculum-ui.js','curriculum.css']){const r=await fetch(base+'/'+asset);assert.equal(r.status,200);assert.ok((await r.text()).length>100);}
+  for(const asset of ['curriculum-units.js','curriculum-foundation.js','curriculum-further.js','curriculum.js','curriculum-ui.js','curriculum.css','mobile.css']){const r=await fetch(base+'/'+asset);assert.equal(r.status,200);assert.ok((await r.text()).length>100);}
   const invalid=structuredClone(next);invalid.learning.units.week.seen=[99];assert.equal((await fetch(base+'/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:invalid,revision})})).status,400);
 });
