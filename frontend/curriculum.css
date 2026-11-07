@@ -7,5 +7,9 @@
 .path-stage-coverage { margin: 16px 0; }
 .path-stage-coverage summary { cursor: pointer; color: var(--green); }
 #path-draft { box-sizing: border-box; width: 100%; margin-top: 10px; }
+.path-word-example { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.path-word-example > div { flex: 1 1 150px; min-width: 0; }
+.path-word-example button { flex-shrink: 0; }
+.path-word-example .translation { color: var(--muted); }
 .path-batch-list { display: grid; gap: 6px; margin: 12px 0; }
 .path-word-actions { margin: 14px 0; }

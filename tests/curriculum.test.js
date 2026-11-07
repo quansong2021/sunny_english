@@ -111,7 +111,11 @@ test('all stages include complete weekday and month groups and their exercises c
   for(const u of path.units){
     assert.ok(!u.prerequisite||path.units.findIndex(x=>x.id===u.prerequisite)<path.units.indexOf(u));
     const questions=path.questions(u);assert.equal(new Set(questions.map(q=>q.id)).size,questions.length);
-    for(const w of u.words){assert.equal(w.length,3);assert.ok(w.every(Boolean));}
+    for (const word of u.words) {
+      assert.equal(word.length, 4);
+      assert.ok(word.every(Boolean));
+      assert.match(word[3], /\p{Script=Han}/u, `${u.id}: ${word[0]}`);
+    }
     const p=path.ensure(s,u);p.seen=u.words.map((_,i)=>i);p.spoken=u.speaking.map((_,i)=>i);
     for(const q of questions){assert.ok(q.answer&&q.why);if(q.options){assert.equal(new Set(q.options).size,q.options.length);assert.ok(q.options.includes(q.answer));}path.answer(s,u,q,q.answer,1000);assert.equal(validState(json(s)),true,`${u.id}/${q.id}`);}
     assert.equal(path.complete(s,u),true);s.learning.resume={unit:u.id,step:'summary'};assert.equal(validState(json(s)),true);

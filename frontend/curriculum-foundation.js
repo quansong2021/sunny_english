@@ -5,18 +5,18 @@ const FoundationAdditions = [
     title: '分清谁在做、跟谁做、东西是谁的',
     goal: '区分 I / me / my 等三种位置，用简单句说明同事、同行者和归属。',
     words: [
-      ['me', '我（宾格）', 'Alex is with me.'],
-      ['him', '他（宾格）', 'I am with him.'],
-      ['her', '她（宾格）；她的', 'Her colleague is with her.'],
-      ['us', '我们（宾格）', 'Alex is with us.'],
-      ['them', '他们（宾格）', 'We are with them.'],
-      ['his', '他的', 'His name is Alex.'],
-      ['its', '它的', 'Its name is Sunny.'],
-      ['our', '我们的', 'Our guide is here.'],
-      ['their', '他们的', 'Their guide is here.'],
-      ['with', '和……一起', 'I am with Alex.'],
-      ['guide', '导游', 'He is our guide.'],
-      ['friend', '朋友', 'She is my friend.']
+      ['me', '我（宾格）', 'Alex is with me.', "Alex 和我在一起。"],
+      ['him', '他（宾格）', 'I am with him.', "我和他在一起。"],
+      ['her', '她（宾格）；她的', 'Her colleague is with her.', "她的同事和她在一起。"],
+      ['us', '我们（宾格）', 'Alex is with us.', "Alex 和我们在一起。"],
+      ['them', '他们（宾格）', 'We are with them.', "我们和他们在一起。"],
+      ['his', '他的', 'His name is Alex.', "他叫 Alex。"],
+      ['its', '它的', 'Its name is Sunny.', "它叫 Sunny。"],
+      ['our', '我们的', 'Our guide is here.', "我们的导游在这里。"],
+      ['their', '他们的', 'Their guide is here.', "他们的导游在这里。"],
+      ['with', '和……一起', 'I am with Alex.', "我和 Alex 在一起。"],
+      ['guide', '导游', 'He is our guide.', "他是我们的导游。"],
+      ['friend', '朋友', 'She is my friend.', "她是我的朋友。"]
     ],
     pronunciation: '先听 I / me / my 和 we / us / our。在句中听清是谁、跟谁在一起，以及是谁的。',
     grammar: [
@@ -42,12 +42,12 @@ const FoundationAdditions = [
     title: '说清一个、几个和哪一个',
     goal: '用 a / an、复数、this / these 和 the 描述随身物品与办公用品。',
     words: [
-      ['bag','包','This is a bag.'],['apple','苹果','This is an apple.'],
-      ['key','钥匙','These are keys.'],['box','盒子','These are boxes.'],
-      ['card','卡片','This is a card.'],['file','文件','These are files.'],
-      ['pen','笔','This is a pen.'],['umbrella','雨伞','This is an umbrella.'],
-      ['this','这个','This is my key.'],['these','这些','These are my keys.'],
-      ['that','那个','That is my bag.'],['those','那些','Those are my files.']
+      ['bag','包','This is a bag.', "这是一个包。"],['apple','苹果','This is an apple.', "这是一个苹果。"],
+      ['key','钥匙','These are keys.', "这些是钥匙。"],['box','盒子','These are boxes.', "这些是盒子。"],
+      ['card','卡片','This is a card.', "这是一张卡片。"],['file','文件','These are files.', "这些是文件。"],
+      ['pen','笔','This is a pen.', "这是一支笔。"],['umbrella','雨伞','This is an umbrella.', "这是一把雨伞。"],
+      ['this','这个','This is my key.', "这是我的钥匙。"],['these','这些','These are my keys.', "这些是我的钥匙。"],
+      ['that','那个','That is my bag.', "那是我的包。"],['those','那些','Those are my files.', "那些是我的文件。"]
     ],
     pronunciation: '听 key / keys 和 box / boxes。boxes 末尾多一个音节，keys 末尾有 /z/。',
     grammar: [
@@ -68,13 +68,13 @@ const FoundationAdditions = [
     title: '听清 0 到 10 和编号',
     goal: '认识 0 到 10，区分数量和编号，能复述房间或柜台号码。',
     words: [
-      ['zero','零','The code is one, zero, two.'],['one','一','I have one bag.'],
-      ['two','二','I have two bags.'],['three','三','I have three cards.'],
-      ['four','四','This is room four.'],['five','五','This is desk five.'],
-      ['six','六','I have six keys.'],['seven','七','This is room seven.'],
-      ['eight','八','I have eight cards.'],['nine','九','This is desk nine.'],
-      ['ten','十','I have ten files.'],['room','房间','This is room eight.'],
-      ['desk','柜台；桌子','This is desk two.'],['code','代码；编号','The code is four, zero, six.']
+      ['zero','零','The code is one, zero, two.', "编号是 102。"],['one','一','I have one bag.', "我有一个包。"],
+      ['two','二','I have two bags.', "我有两个包。"],['three','三','I have three cards.', "我有三张卡片。"],
+      ['four','四','This is room four.', "这是四号房。"],['five','五','This is desk five.', "这是五号柜台。"],
+      ['six','六','I have six keys.', "我有六把钥匙。"],['seven','七','This is room seven.', "这是七号房。"],
+      ['eight','八','I have eight cards.', "我有八张卡片。"],['nine','九','This is desk nine.', "这是九号柜台。"],
+      ['ten','十','I have ten files.', "我有十份文件。"],['room','房间','This is room eight.', "这是八号房。"],
+      ['desk','柜台；桌子','This is desk two.', "这是二号柜台。"],['code','代码；编号','The code is four, zero, six.', "编号是 406。"]
     ],
     pronunciation: '听 three 和 two 时，留意 three 开头的 /θ/。读编号可以逐位读，例如 408 读 four zero eight。',
     grammar: [
@@ -94,16 +94,16 @@ const FoundationAdditions = [
     title: '听清 11 到 100 和金额',
     goal: '学习 11 到 19、整十与一百，通过组合读出其余两位数。',
     words: [
-      ['eleven','十一','I have eleven files.'],['twelve','十二','I have twelve cards.'],
-      ['thirteen','十三','This is desk thirteen.'],['fourteen','十四','This is room fourteen.'],
-      ['fifteen','十五','It is fifteen dollars.'],['sixteen','十六','It is sixteen dollars.'],
-      ['seventeen','十七','It is seventeen dollars.'],['eighteen','十八','This is room eighteen.'],
-      ['nineteen','十九','I have nineteen cards.'],['twenty','二十','It is twenty dollars.'],
-      ['thirty','三十','It is thirty dollars.'],['forty','四十','It is forty dollars.'],
-      ['fifty','五十','It is fifty dollars.'],['sixty','六十','It is sixty dollars.'],
-      ['seventy','七十','It is seventy dollars.'],['eighty','八十','It is eighty dollars.'],
-      ['ninety','九十','It is ninety dollars.'],['hundred','百','It is one hundred dollars.'],
-      ['dollar','美元','It is one dollar.'],['price','价格','The price is twenty dollars.']
+      ['eleven','十一','I have eleven files.', "我有十一份文件。"],['twelve','十二','I have twelve cards.', "我有十二张卡片。"],
+      ['thirteen','十三','This is desk thirteen.', "这是十三号柜台。"],['fourteen','十四','This is room fourteen.', "这是十四号房。"],
+      ['fifteen','十五','It is fifteen dollars.', "价格是十五美元。"],['sixteen','十六','It is sixteen dollars.', "价格是十六美元。"],
+      ['seventeen','十七','It is seventeen dollars.', "价格是十七美元。"],['eighteen','十八','This is room eighteen.', "这是十八号房。"],
+      ['nineteen','十九','I have nineteen cards.', "我有十九张卡片。"],['twenty','二十','It is twenty dollars.', "价格是二十美元。"],
+      ['thirty','三十','It is thirty dollars.', "价格是三十美元。"],['forty','四十','It is forty dollars.', "价格是四十美元。"],
+      ['fifty','五十','It is fifty dollars.', "价格是五十美元。"],['sixty','六十','It is sixty dollars.', "价格是六十美元。"],
+      ['seventy','七十','It is seventy dollars.', "价格是七十美元。"],['eighty','八十','It is eighty dollars.', "价格是八十美元。"],
+      ['ninety','九十','It is ninety dollars.', "价格是九十美元。"],['hundred','百','It is one hundred dollars.', "价格是一百美元。"],
+      ['dollar','美元','It is one dollar.', "价格是一美元。"],['price','价格','The price is twenty dollars.', "价格是二十美元。"]
     ],
     choiceGroups: [[0,1,2,3,4,5,6,7,8],[9,10,11,12,13,14,15,16,17]],
     pronunciation: '分开听 thirteen / thirty 和 fifteen / fifty，注意 -teen 和 -ty 的重音差异。听到金额后复述确认。',

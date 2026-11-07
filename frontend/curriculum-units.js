@@ -4,21 +4,21 @@ const ExpandedUnits = [
     id: 'meeting-time', prerequisite: 'requests', stage: 'arrange', scene: '工作',
     title: '确认日期与会议时间', goal: '说出十二个月，区分日期和时刻，约定或改约会议。',
     words: [
-      ['January', '一月', 'The next meeting is in January.'],
-      ['February', '二月', 'The next meeting is in February.'],
-      ['March', '三月', 'The next meeting is in March.'],
-      ['April', '四月', 'The next meeting is in April.'],
-      ['May', '五月', 'The next meeting is in May.'],
-      ['June', '六月', 'The next meeting is in June.'],
-      ['July', '七月', 'The next meeting is in July.'],
-      ['August', '八月', 'The next meeting is in August.'],
-      ['September', '九月', 'The next meeting is in September.'],
-      ['October', '十月', 'The next meeting is in October.'],
-      ['November', '十一月', 'The next meeting is in November.'],
-      ['December', '十二月', 'The next meeting is in December.'],
-      ['meeting', '会议', 'The meeting is at three.'],
-      ['available', '有空的', 'Are you available on May 12?'],
-      ['move', '改到；移到', 'Can we move the meeting to three?']
+      ['January', '一月', 'The next meeting is in January.', "下次会议在一月。"],
+      ['February', '二月', 'The next meeting is in February.', "下次会议在二月。"],
+      ['March', '三月', 'The next meeting is in March.', "下次会议在三月。"],
+      ['April', '四月', 'The next meeting is in April.', "下次会议在四月。"],
+      ['May', '五月', 'The next meeting is in May.', "下次会议在五月。"],
+      ['June', '六月', 'The next meeting is in June.', "下次会议在六月。"],
+      ['July', '七月', 'The next meeting is in July.', "下次会议在七月。"],
+      ['August', '八月', 'The next meeting is in August.', "下次会议在八月。"],
+      ['September', '九月', 'The next meeting is in September.', "下次会议在九月。"],
+      ['October', '十月', 'The next meeting is in October.', "下次会议在十月。"],
+      ['November', '十一月', 'The next meeting is in November.', "下次会议在十一月。"],
+      ['December', '十二月', 'The next meeting is in December.', "下次会议在十二月。"],
+      ['meeting', '会议', 'The meeting is at three.', "会议在三点。"],
+      ['available', '有空的', 'Are you available on May 12?', "你五月十二日有空吗？"],
+      ['move', '改到；移到', 'Can we move the meeting to three?', "我们能把会议改到三点吗？"]
     ],
     choiceGroups: [[0,1,2,3,4,5,6,7,8,9,10,11],[12,13,14]],
     pronunciation: '月份首字母大写，分开听 June 和 July。说 May 12 时，可读成 May twelfth。整点后可加 a.m. 或 p.m. 说明上午或下午。',
@@ -52,10 +52,10 @@ const ExpandedUnits = [
     id: 'getting-around', prerequisite: 'requests', stage: 'arrange', scene: '旅游',
     title: '问路与搭乘公共交通', goal: '问车站怎么走，确认站台、线路和换乘地点。',
     words: [
-      ['station','车站','Where is the station?'], ['platform','站台','The train leaves from platform two.'],
-      ['ticket','车票','I need a ticket to Central.'], ['line','线路','Take line two.'],
-      ['change','换乘','Change at Central.'], ['straight','直走；笔直地','Go straight.'],
-      ['left','左边','Turn left at the corner.'], ['entrance','入口','The entrance is next to the shop.']
+      ['station','车站','Where is the station?', "车站在哪里？"], ['platform','站台','The train leaves from platform two.', "火车从二号站台发车。"],
+      ['ticket','车票','I need a ticket to Central.', "我需要一张到中央站的票。"], ['line','线路','Take line two.', "坐二号线。"],
+      ['change','换乘','Change at Central.', "在中央站换乘。"], ['straight','直走；笔直地','Go straight.', "直走。"],
+      ['left','左边','Turn left at the corner.', "在拐角处左转。"], ['entrance','入口','The entrance is next to the shop.', "入口在商店旁边。"]
     ],
     pronunciation: '注意区分 line two 和 platform two，听完数字后复述对应的线路或站台。',
     grammar: [
@@ -79,10 +79,10 @@ const ExpandedUnits = [
     id: 'hotel-arrival', prerequisite: 'meeting-time', stage: 'arrange', scene: '旅游',
     title: '酒店入住与确认设施', goal: '说明预订人和入住晚数，确认退房时间、设施和费用。',
     words: [
-      ['reservation','预订','I have a reservation for two nights.'], ['check in','办理入住','Can I check in now?'],
-      ['check out','办理退房','We check out tomorrow.'], ['night','晚；夜','I am staying for one night.'],
-      ['included','包含在内的','Is breakfast included?'], ['deposit','押金','Is there a deposit?'],
-      ['elevator','电梯','The elevator is on the left.'], ['front desk','前台','Please ask at the front desk.']
+      ['reservation','预订','I have a reservation for two nights.', "我订了两晚。"], ['check in','办理入住','Can I check in now?', "我现在可以办理入住吗？"],
+      ['check out','办理退房','We check out tomorrow.', "我们明天退房。"], ['night','晚；夜','I am staying for one night.', "我住一晚。"],
+      ['included','包含在内的','Is breakfast included?', "含早餐吗？"], ['deposit','押金','Is there a deposit?', "需要交押金吗？"],
+      ['elevator','电梯','The elevator is on the left.', "电梯在左边。"], ['front desk','前台','Please ask at the front desk.', "请到前台问一下。"]
     ],
     pronunciation: 'check in 和 check out 的第二个词不同。听到退房时间后，用 at 加时刻复述。',
     grammar: [
@@ -106,10 +106,10 @@ const ExpandedUnits = [
     id: 'ordering-food', prerequisite: 'requests', stage: 'arrange', scene: '旅游',
     title: '点餐、核对配料与结账', goal: '点指定数量的餐食，询问配料并礼貌结账。',
     words: [
-      ['menu','菜单','Can I see the menu, please?'], ['order','点餐','Are you ready to order?'],
-      ['portion','一份','I would like one portion of rice.'], ['glass','一杯','Can I have a glass of water?'],
-      ['bill','账单','Could we have the bill, please?'], ['ingredients','配料','Can you tell me the ingredients?'],
-      ['without','不加；没有','Can I have it without onions?'], ['spicy','辣的','Is this dish spicy?']
+      ['menu','菜单','Can I see the menu, please?', "请问我能看看菜单吗？"], ['order','点餐','Are you ready to order?', "您准备好点餐了吗？"],
+      ['portion','一份','I would like one portion of rice.', "我想要一份米饭。"], ['glass','一杯','Can I have a glass of water?', "可以给我一杯水吗？"],
+      ['bill','账单','Could we have the bill, please?', "请给我们账单，好吗？"], ['ingredients','配料','Can you tell me the ingredients?', "您能告诉我有哪些配料吗？"],
+      ['without','不加；没有','Can I have it without onions?', "可以不放洋葱吗？"], ['spicy','辣的','Is this dish spicy?', "这道菜辣吗？"]
     ],
     pronunciation: 'I would like 常缩成 I’d like。说数量时，one glass 和 two glasses 的尾音不同。',
     grammar: [
@@ -133,10 +133,10 @@ const ExpandedUnits = [
     id: 'reporting-a-bug', prerequisite: 'week', stage: 'handle', scene: '工作',
     title: '复述步骤并报告缺陷', goal: '用过去时交代操作和结果，写出可复现的缺陷说明。',
     words: [
-      ['submit','提交','I submitted the form.'], ['error','错误','The page showed an error.'],
-      ['reproduce','复现','I reproduced the issue twice.'], ['expected','预期的','The expected result was a confirmation.'],
-      ['actual','实际的','The actual result was an error.'], ['attachment','附件','I added an attachment.'],
-      ['save','保存','The system did not save the request.'], ['screenshot','截图','I took a screenshot.']
+      ['submit','提交','I submitted the form.', "我提交了表单。"], ['error','错误','The page showed an error.', "页面显示了错误。"],
+      ['reproduce','复现','I reproduced the issue twice.', "我复现了两次这个问题。"], ['expected','预期的','The expected result was a confirmation.', "预期会显示确认信息。"],
+      ['actual','实际的','The actual result was an error.', "实际出现了错误。"], ['attachment','附件','I added an attachment.', "我添加了一个附件。"],
+      ['save','保存','The system did not save the request.', "系统没有保存这份申请。"], ['screenshot','截图','I took a screenshot.', "我截了图。"]
     ],
     pronunciation: 'submitted 多一个音节，saved 的末尾较轻。说缺陷时，把操作和结果分成两句。',
     grammar: [
@@ -160,10 +160,10 @@ const ExpandedUnits = [
     id: 'airport-check-in', prerequisite: 'meeting-time', stage: 'handle', scene: '旅游',
     title: '机场值机与登机信息', goal: '说明证件和行李情况，听懂登机口、时间和行李要求。',
     words: [
-      ['passport','护照','Here is my passport.'], ['boarding pass','登机牌','Here is your boarding pass.'],
-      ['gate','登机口','Please go to gate twelve.'], ['boarding','登机','Boarding starts at seven thirty.'],
-      ['baggage','行李','Do you have any baggage to check?'], ['carry-on','随身行李','I only have a carry-on.'],
-      ['check a bag','托运行李','I need to check a bag.'], ['security','安检','Please go through security.']
+      ['passport','护照','Here is my passport.', "这是我的护照。"], ['boarding pass','登机牌','Here is your boarding pass.', "这是您的登机牌。"],
+      ['gate','登机口','Please go to gate twelve.', "请前往十二号登机口。"], ['boarding','登机','Boarding starts at seven thirty.', "七点半开始登机。"],
+      ['baggage','行李','Do you have any baggage to check?', "您有行李要托运吗？"], ['carry-on','随身行李','I only have a carry-on.', "我只有一件随身行李。"],
+      ['check a bag','托运行李','I need to check a bag.', "我需要托运一个包。"], ['security','安检','Please go through security.', "请通过安检。"]
     ],
     pronunciation: '听登机广播时先抓 gate 和 boarding，再核对后面的数字。可用 Do you mean …? 复述确认。',
     grammar: [
@@ -187,10 +187,10 @@ const ExpandedUnits = [
     id: 'approval-flow', prerequisite: 'questions', stage: 'handle', scene: '工作',
     title: '解释审批流程与退回原因', goal: '按顺序说明表单流转，并解释待审批、退回和重新提交。',
     words: [
-      ['applicant','申请人','The applicant submits the form.'], ['review','审核','The manager reviews the request.'],
-      ['approval','审批；批准','The request is waiting for approval.'], ['return','退回','The manager returns the form.'],
-      ['reason','原因','Please add the reason.'], ['resubmit','重新提交','The applicant can resubmit the form.'],
-      ['missing','缺少的','The attachment is missing.'], ['notify','通知','The system notifies the applicant.']
+      ['applicant','申请人','The applicant submits the form.', "申请人提交表单。"], ['review','审核','The manager reviews the request.', "经理审核申请。"],
+      ['approval','审批；批准','The request is waiting for approval.', "这份申请正在等待审批。"], ['return','退回','The manager returns the form.', "经理退回表单。"],
+      ['reason','原因','Please add the reason.', "请填写原因。"], ['resubmit','重新提交','The applicant can resubmit the form.', "申请人可以重新提交表单。"],
+      ['missing','缺少的','The attachment is missing.', "附件缺失。"], ['notify','通知','The system notifies the applicant.', "系统会通知申请人。"]
     ],
     pronunciation: 'approval 的重音在第二音节。说流程时，在 first、then、after that 后稍停一下。',
     grammar: [
@@ -214,10 +214,10 @@ const ExpandedUnits = [
     id: 'hotel-problem', prerequisite: 'reporting-a-bug', stage: 'handle', scene: '旅游',
     title: '反馈住宿问题并请求处理', goal: '说明什么地方出了问题、何时开始，并提出可执行的请求。',
     words: [
-      ['air conditioning','空调','The air conditioning is not working.'], ['noise','噪声','There was a lot of noise last night.'],
-      ['leak','漏水处；渗漏','There is a leak in the bathroom.'], ['towel','毛巾','Could we have another towel?'],
-      ['fix','修理','Could someone fix it today?'], ['move rooms','换房','Could we move rooms?'],
-      ['last night','昨晚','The noise started last night.'], ['right away','马上','Can someone come right away?']
+      ['air conditioning','空调','The air conditioning is not working.', "空调坏了。"], ['noise','噪声','There was a lot of noise last night.', "昨晚噪音很大。"],
+      ['leak','漏水处；渗漏','There is a leak in the bathroom.', "浴室里有地方漏水。"], ['towel','毛巾','Could we have another towel?', "可以再给我们一条毛巾吗？"],
+      ['fix','修理','Could someone fix it today?', "今天能派人来修一下吗？"], ['move rooms','换房','Could we move rooms?', "我们可以换房吗？"],
+      ['last night','昨晚','The noise started last night.', "噪音是从昨晚开始的。"], ['right away','马上','Can someone come right away?', "能马上派人过来吗？"]
     ],
     pronunciation: '听 Could someone …? 时注意后面的动作。描述问题时先慢速说出地点，再补充影响。',
     grammar: [
@@ -241,10 +241,10 @@ const ExpandedUnits = [
     id: 'clarifying-rules', prerequisite: 'approval-flow', stage: 'coordinate', scene: '工作',
     title: '澄清需求、条件和例外', goal: '用 if 复述审批规则，核对边界值和例外情况。',
     words: [
-      ['rule','规则','Can we confirm the rule?'], ['amount','金额','The amount is exactly five hundred.'],
-      ['limit','限额','The limit is five hundred.'], ['above','高于','The amount is above the limit.'],
-      ['exactly','正好；恰好','What happens at exactly five hundred?'], ['otherwise','否则','Otherwise, send it to the manager.'],
-      ['exception','例外','Is there an exception for urgent requests?'], ['route','转交；路由','The system routes it to HR.']
+      ['rule','规则','Can we confirm the rule?', "我们能确认一下规则吗？"], ['amount','金额','The amount is exactly five hundred.', "金额正好是五百。"],
+      ['limit','限额','The limit is five hundred.', "上限是五百。"], ['above','高于','The amount is above the limit.', "金额超过了上限。"],
+      ['exactly','正好；恰好','What happens at exactly five hundred?', "正好五百时会怎样？"], ['otherwise','否则','Otherwise, send it to the manager.', "否则，把它转给经理。"],
+      ['exception','例外','Is there an exception for urgent requests?', "紧急申请有例外吗？"], ['route','转交；路由','The system routes it to HR.', "系统会把它转给人力部门。"]
     ],
     pronunciation: '听金额时留意 above 和 exactly，再把边界值单独复述。正好等于和超过要分清。',
     grammar: [
@@ -268,10 +268,10 @@ const ExpandedUnits = [
     id: 'missed-connection', prerequisite: 'clarifying-rules', stage: 'coordinate', scene: '旅游',
     title: '行程延误与改签协商', goal: '交代错过衔接的风险，比较可选行程并确认费用。',
     words: [
-      ['delay','延误','There is a delay of one hour.'], ['connection','衔接的班次','I may miss my connection.'],
-      ['rebook','改订；改签','Can you rebook me on the next flight?'], ['alternative','备选方案','Is there an alternative?'],
-      ['direct','直达的','Is there a direct flight?'], ['earlier','更早的','Is there an earlier train?'],
-      ['fee','费用','Is there a change fee?'], ['refund','退款','Can I get a refund?']
+      ['delay','延误','There is a delay of one hour.', "延误了一小时。"], ['connection','衔接的班次','I may miss my connection.', "我可能会错过中转。"],
+      ['rebook','改订；改签','Can you rebook me on the next flight?', "能帮我改签到下一趟航班吗？"], ['alternative','备选方案','Is there an alternative?', "还有其他选择吗？"],
+      ['direct','直达的','Is there a direct flight?', "有直飞航班吗？"], ['earlier','更早的','Is there an earlier train?', "有更早的火车吗？"],
+      ['fee','费用','Is there a change fee?', "要收改签费吗？"], ['refund','退款','Can I get a refund?', "我可以退款吗？"]
     ],
     pronunciation: '听懂 earlier 和 later，再核对新行程的日期和时间。询问费用时可以复述总金额。',
     grammar: [
@@ -295,10 +295,10 @@ const ExpandedUnits = [
     id: 'prioritizing-issues', prerequisite: 'approval-flow', stage: 'coordinate', scene: '工作',
     title: '说明影响并协商缺陷优先级', goal: '区分影响和处理顺序，用理由与比较提出处理建议。',
     words: [
-      ['impact','影响','What is the impact on employees?'], ['severity','严重程度','The severity is high.'],
-      ['priority','优先级','This issue has a higher priority.'], ['block','阻止','It blocks employees from submitting requests.'],
-      ['workaround','临时解决方法','There is a workaround.'], ['affect','影响；波及','It affects new employees.'],
-      ['release','发布','Can we fix it before the release?'], ['suggest','建议','I suggest fixing it first.']
+      ['impact','影响','What is the impact on employees?', "这对员工有什么影响？"], ['severity','严重程度','The severity is high.', "严重程度很高。"],
+      ['priority','优先级','This issue has a higher priority.', "这个问题的优先级更高。"], ['block','阻止','It blocks employees from submitting requests.', "它导致员工无法提交申请。"],
+      ['workaround','临时解决方法','There is a workaround.', "有一个临时的绕过办法。"], ['affect','影响；波及','It affects new employees.', "它影响新员工。"],
+      ['release','发布','Can we fix it before the release?', "我们能在发布前修好它吗？"], ['suggest','建议','I suggest fixing it first.', "我建议先修这个问题。"]
     ],
     pronunciation: 'severity 和 priority 都有多个音节。描述影响时停在受影响的人群之后，再给建议。',
     grammar: [
@@ -322,10 +322,10 @@ const ExpandedUnits = [
     id: 'handover', prerequisite: 'reporting-a-bug', stage: 'coordinate', scene: '工作',
     title: '交接进展与确认下一步', goal: '区分已完成和待完成事项，明确负责人、期限和跟进方式。',
     words: [
-      ['handover','交接','Let us review the handover.'], ['completed','完成了；已完成的','I have completed the first round.'],
-      ['remaining','剩余的','There are two remaining cases.'], ['owner','负责人','Who is the owner of this task?'],
-      ['deadline','截止时间','The deadline is Friday.'], ['verify','核验；验证','Please verify the fix.'],
-      ['follow up','跟进','I will follow up tomorrow.'], ['update','更新；进展消息','I will send an update by noon.']
+      ['handover','交接','Let us review the handover.', "我们来过一遍交接内容吧。"], ['completed','完成了；已完成的','I have completed the first round.', "我已完成第一轮。"],
+      ['remaining','剩余的','There are two remaining cases.', "还有两个用例没做。"], ['owner','负责人','Who is the owner of this task?', "这项任务由谁负责？"],
+      ['deadline','截止时间','The deadline is Friday.', "截止日期是周五。"], ['verify','核验；验证','Please verify the fix.', "请验证一下修复。"],
+      ['follow up','跟进','I will follow up tomorrow.', "我明天跟进。"], ['update','更新；进展消息','I will send an update by noon.', "我会在中午前发一条进展消息。"]
     ],
     pronunciation: 'by Friday 表示最迟到周五，on Friday 表示在周五当天。听到截止时间后把介词和日期一起复述。',
     grammar: [

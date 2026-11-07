@@ -218,7 +218,21 @@ function pathWordActions(unit) {
     </div>
   </div>`;
 }
-function pathWords(u){const p=LearningPath.progress(state,u);return `<section class="panel path-anchor"><h2>先听读一小段</h2>${pathWordActions(u)}<p class="muted">这一单元围绕下面的短文学习。先听大意，再逐句理解，最后换成自己的信息。</p><div class="path-audio"><button class="primary" data-path-hear="${esc(u.passage[0])}">♫ 听本课短文</button><button class="secondary" data-path-hear="${esc(u.passage[0])}" data-slow="true">慢速听</button></div>${wordSentence(u.passage[0])}<details><summary>看中文帮助理解</summary><p>${u.passage[1]}</p></details></section><section class="panel"><h2>这一组，完整认识</h2><p>${esc(u.pronunciation)}</p><p class="muted">已介绍 ${p.seen.length} / ${u.words.length} 个词。点词可看更多释义；“已介绍”只记录你看过，并不标记掌握。</p><div class="path-word-grid">${u.words.map(([en,zh,example],i)=>`<article><div class="path-word-heading"><button class="sentence-word" data-lookup="${esc(en)}" data-context="${esc(example)}" data-hint="${esc(zh)}">${esc(en)}</button><button class="audio-btn" data-say="${esc(en)}" aria-label="播放 ${esc(en)}">♫</button></div><p>${esc(zh)}</p>${wordSentence(example)}<label class="path-seen"><input type="checkbox" data-path-seen="${i}" ${p.seen.includes(i)?'checked':''}> 已看释义和例句</label></article>`).join('')}</div></section>`+pathQuestion(u,'words');}
+function pathWordCard([word, meaning, example, translation], index, seen) {
+  return `<article>
+    <div class="path-word-heading">
+      <button class="sentence-word" data-lookup="${esc(word)}" data-context="${esc(example)}" data-hint="${esc(meaning)}">${esc(word)}</button>
+      <button class="audio-btn" data-say="${esc(word)}" aria-label="播放单词 ${esc(word)}">♫</button>
+    </div>
+    <p>${esc(meaning)}</p>
+    <div class="path-word-example">
+      <div>${wordSentence(example)}<p class="translation" lang="zh-CN">${esc(translation)}</p></div>
+      <button class="secondary" data-path-hear="${esc(example)}" aria-label="播放例句：${esc(example)}">♫ 听例句</button>
+    </div>
+    <label class="path-seen"><input type="checkbox" data-path-seen="${index}" ${seen ? 'checked' : ''}> 已看释义和例句</label>
+  </article>`;
+}
+function pathWords(u){const p=LearningPath.progress(state,u);return `<section class="panel path-anchor"><h2>先听读一小段</h2>${pathWordActions(u)}<p class="muted">这一单元围绕下面的短文学习。先听大意，再逐句理解，最后换成自己的信息。</p><div class="path-audio"><button class="primary" data-path-hear="${esc(u.passage[0])}">♫ 听本课短文</button><button class="secondary" data-path-hear="${esc(u.passage[0])}" data-slow="true">慢速听</button></div>${wordSentence(u.passage[0])}<details><summary>看中文帮助理解</summary><p>${u.passage[1]}</p></details></section><section class="panel"><h2>这一组，完整认识</h2><p>${esc(u.pronunciation)}</p><p class="muted">已介绍 ${p.seen.length} / ${u.words.length} 个词。点词可看更多释义；“已介绍”只记录你看过，并不标记掌握。</p><div class="path-word-grid">${u.words.map((word, index) => pathWordCard(word, index, p.seen.includes(index))).join('')}</div></section>`+pathQuestion(u,'words');}
 function pathGrammar(u){return `<section class="panel"><h2>知道怎么说，也知道为什么</h2>${u.grammar.map(([title,note,en])=>`<article class="path-rule"><h3>${title}</h3><p>${note}</p>${wordSentence(en)}<button class="audio-btn" data-say="${esc(en)}" aria-label="播放语法例句">♫</button></article>`).join('')}</section>`+pathQuestion(u,'grammar');}
 function pathOutput(unit) {
   const progress = LearningPath.progress(state, unit);
