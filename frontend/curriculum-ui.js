@@ -201,10 +201,10 @@ function pathQuestion(u,skill){
   const isTransfer = variant !== undefined;
   const title = isTransfer ? (q.audio ? '听写关键信息' : '换情境造句') : (skill === 'output' ? '句子小练习' : '检验一下');
   const label = q.audio ? '输入听到的信息' : '输入英语句子';
-  return `<section class="panel path-exercise"><div class="path-exercise-head"><h3>${title}</h3><span>${index+1} / ${qs.length}</span></div>${q.audio?`<div class="path-audio"><button class="primary" data-path-hear="${esc(q.audio)}">♫ 播放题目</button><button class="secondary" data-path-hear="${esc(q.audio)}" data-slow="true">慢速听</button></div><p class="muted">使用设备英语语音。听不清可重播；无法播放时先学习其他部分，听辨记录会保留为未完成。</p>`:''}
+  return `<section class="panel path-exercise"><div class="path-exercise-head"><h3>${title}</h3><span>${index+1} / ${qs.length}</span></div>${q.audio?`<div class="path-audio"><button class="primary" data-path-question-play data-path-hear="${esc(q.audio)}">♫ 播放题目</button><button class="secondary" data-path-hear="${esc(q.audio)}" data-slow="true">慢速听</button></div><p class="muted">使用设备英语语音。听不清可重播；无法播放时先学习其他部分，听辨记录会保留为未完成。</p>`:''}
     <form id="path-question" data-q="${q.id}" data-variant="${variant ?? 0}"><fieldset><legend>${esc(q.prompt)}</legend>${q.options?q.options.map((option,i)=>`<label class="path-choice"><input type="radio" name="value" value="${esc(option)}" required ${a?.value===option?'checked':''}><span>${esc(option)}</span></label>`).join(''):`<label class="path-writing-label">${label}<input name="value" maxlength="500" autocomplete="off" required value="${esc(a?.value||'')}" placeholder="${q.audio ? '听完再输入' : '试着自己写一句'}"></label><p class="muted">${q.audio ? '可以重播，再输入题目要求的关键信息。' : '此处核对指定句式。开放表达可在下方口语练习中进行。'}</p>`}<button class="primary" type="submit">检查答案</button></fieldset></form>
     <div id="path-feedback" role="status">${a?`<div class="feedback">${ok?'✓ 当前回答正确':'还需要巩固'}<br>${esc(q.why)}${!ok?`<br>参考：${esc(q.answer)}`:''}<br><small>${ok?'后续会安排跨天复习；当前答对不等于已长期掌握。':'理解后请重新作答，系统不会自动替你通过。'}</small></div>`:''}</div>
-    <div class="path-question-nav"><button class="secondary" data-path-qindex="${index-1}" ${index===0?'disabled':''}>上一题</button><label>选择题目 <select id="path-qselect">${qs.map((item,i)=>`<option value="${i}" ${i===index?'selected':''}>${i+1} · ${LearningPath.questionSkipped(p,item.id)?'已略过':p.answers[item.id]?(LearningPath.passed(item,p.answers[item.id])?'已答对':'待巩固'):'未作答'}</option>`).join('')}</select></label><button class="secondary" data-path-qindex="${index+1}" ${index===qs.length-1?'disabled':''}>下一题</button></div></section>`;
+    <div class="path-question-nav"><button class="secondary" data-path-qindex="${index-1}" ${index===0?'disabled':''}>上一题</button><label>选择题目 <select id="path-qselect">${qs.map((item,i)=>`<option value="${i}" ${i===index?'selected':''}>${i+1} · ${LearningPath.questionSkipped(p,item.id)?'已略过':p.answers[item.id]?(LearningPath.passed(item,p.answers[item.id])?'已答对':'待巩固'):'未作答'}</option>`).join('')}</select></label><button class="secondary" data-path-qindex="${index+1}" data-path-next ${index===qs.length-1?'disabled':''}>下一题</button></div></section>`;
 }
 function pathWordActions(unit) {
   const words = LearningPath.coverage(state, unit).find(item => item.id === 'words');
@@ -447,8 +447,24 @@ function bindLearningPath(){
   document.querySelectorAll('[data-path-seen]').forEach(b=>b.onchange=()=>{const p=LearningPath.ensure(state,u),n=Number(b.dataset.pathSeen);p.seen=b.checked?[...new Set([...p.seen,n])]:p.seen.filter(i=>i!==n);save();render();});
   document.querySelectorAll('[data-path-spoken]').forEach(b=>b.onchange=()=>{const p=LearningPath.ensure(state,u),n=Number(b.dataset.pathSpoken);p.spoken=b.checked?[...new Set([...p.spoken,n])]:p.spoken.filter(i=>i!==n);save();render();});
   document.querySelectorAll('[data-path-hear]').forEach(b=>b.onclick=()=>speak(b.dataset.pathHear,b.dataset.slow==='true'));
-  const move=index=>{pathQuestionPositions.set(key,Number(index));state.learning||={resume:null,units:{}};state.learning.resume={unit:u.id,step,question:LearningPath.questions(u).filter(q=>q.skill===step)[Number(index)].id};save();cleanup();render();};
-  document.querySelectorAll('[data-path-qindex]').forEach(b=>b.onclick=()=>move(b.dataset.pathQindex));
+  const move = (index, play = false) => {
+    const position = Number(index);
+    const question = LearningPath.questions(u).filter(question => question.skill === step)[position];
+    if (!question) return;
+    pathQuestionPositions.set(key, position);
+    state.learning ||= { resume: null, units: {} };
+    state.learning.resume = { unit: u.id, step, question: question.id };
+    save();
+    cleanup();
+    render();
+    if (play && step === 'listening') {
+      const audio = document.querySelector('[data-path-question-play]')?.dataset.pathHear;
+      if (audio) speak(audio);
+    }
+  };
+  for (const button of document.querySelectorAll('[data-path-qindex]')) {
+    button.onclick = () => move(button.dataset.pathQindex, button.hasAttribute('data-path-next'));
+  }
   document.querySelector('#path-qselect')?.addEventListener('change',e=>move(e.target.value));
   document.querySelector('#path-draft')?.addEventListener('input', event => {
     LearningPath.ensure(state, u).draft = event.target.value;
