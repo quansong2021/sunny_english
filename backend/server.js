@@ -1,8 +1,10 @@
 import { createPool, initialize, MysqlStore } from './database.js';
 import { createApp } from './http.js';
+import { seedWordbank } from './wordbank.js';
 const pool=createPool();
 try {
   await initialize(pool);
+  await seedWordbank(pool);
   const port=Number(process.env.PORT||3000);
   const store=new MysqlStore(pool);
   const profile=await store.findUser(process.env.APP_USERNAME||'sunny');

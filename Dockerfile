@@ -4,6 +4,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 COPY --chown=node:node backend ./backend
 COPY --chown=node:node frontend ./frontend
+COPY third-party ./third-party
 USER node
 ENV NODE_ENV=production PORT=3000
 EXPOSE 3000

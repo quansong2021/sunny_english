@@ -65,3 +65,21 @@ CREATE TABLE IF NOT EXISTS learning_preferences (
   resume_state JSON NULL,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS dictionary_entries (
+  word VARCHAR(120) PRIMARY KEY,
+  entry_json JSON NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS dictionary_metadata (
+  dataset_key VARCHAR(30) PRIMARY KEY,
+  version CHAR(64) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS saved_words (
+  user_id INT UNSIGNED NOT NULL,
+  word VARCHAR(120) NOT NULL,
+  entry_json JSON NOT NULL,
+  PRIMARY KEY (user_id,word),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

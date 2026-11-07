@@ -1,5 +1,5 @@
 export function emptyState() {
-  return { name: 'Sunny', goal: 40, done: {}, words: {}, answers: {}, notes: {}, activity: {}, plans: {}, resume: null };
+  return { name: 'Sunny', goal: 40, done: {}, words: {}, answers: {}, notes: {}, activity: {}, plans: {}, resume: null, savedWords: {} };
 }
 const record = x => x && typeof x === 'object' && !Array.isArray(x);
 const lessonId='(?:[1-9]|[12][0-9]|30)';
@@ -10,6 +10,7 @@ const validDate=k=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(k))return false;const d=new D
 const safeEntries = (x, limit, check) => record(x) && Object.keys(x).length <= limit && Object.entries(x).every(([k,v]) => !['__proto__','constructor','prototype'].includes(k) && check(k,v));
 export function validState(s) {
   return !!(record(s) && typeof s.name === 'string' && s.name.trim().length > 0 && s.name.length <= 30 && [20,40,60].includes(s.goal)
+    && (s.savedWords===undefined||safeEntries(s.savedWords,6000,(k,v)=>/^[a-z]+(?:[' -][a-z]+)*$/.test(k)&&k.length<=120&&record(v)&&Number.isSafeInteger(v.addedAt)&&v.addedAt>=0&&typeof v.meaning==='string'&&v.meaning.length<=1000&&typeof v.sentence==='string'&&v.sentence.length<=2000))
     && safeEntries(s.done,120,(k,v)=>step.test(k)&&typeof v==='boolean')
     && safeEntries(s.words,300,(k,v)=>word.test(k)&&record(v)&&Number.isInteger(v.level)&&v.level>=0&&v.level<=5&&Number.isSafeInteger(v.due)&&v.due>=0&&v.due<=8640000000000000&&typeof v.seen==='boolean')
     && safeEntries(s.answers,150,(k,v)=>answer.test(k)&&typeof v==='string'&&v.length<=20000)

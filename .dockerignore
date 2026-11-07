@@ -5,3 +5,5 @@
 !backend/**
 !frontend/
 !frontend/**
+!third-party/
+!third-party/**

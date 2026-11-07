@@ -3,9 +3,11 @@ import { readFile } from 'node:fs/promises';
 import { hashPassword, verifyPassword, newToken, tokenHash } from './auth.js';
 import { validState } from './state.js';
 import { ConflictError } from './database.js';
+import { wordbank } from './wordbank.js';
 const dummyHash=await hashPassword(newToken());
 const assets=new Map([['/',['index.html','text/html; charset=utf-8']],['/index.html',['index.html','text/html; charset=utf-8']],['/style.css',['style.css','text/css; charset=utf-8']],['/app.js',['app.js','text/javascript; charset=utf-8']],['/data.js',['data.js','text/javascript; charset=utf-8']],['/vocabulary.js',['vocabulary.js','text/javascript; charset=utf-8']]]);
-for(const file of ['month-vocabulary.js','month-lessons.js','pacing.js']) assets.set('/'+file,[file,'text/javascript; charset=utf-8']);
+for(const file of ['month-vocabulary.js','month-lessons.js','pacing.js','wordbank-ui.js']) assets.set('/'+file,[file,'text/javascript; charset=utf-8']);
+assets.set('/wordbank.css',['wordbank.css','text/css; charset=utf-8']);
 class HttpError extends Error {constructor(status,message){super(message);this.status=status;}}
 async function jsonBody(req){
   if(!(req.headers['content-type']||'').startsWith('application/json'))throw new HttpError(415,'请使用 JSON 请求。');
@@ -46,6 +48,8 @@ export function createApp(store,{secureCookie=false,logError=console.error,local
         const preview=localPreviewUser&&localHost&&localAddress;
         const user=passwordlessUser||(preview?localPreviewUser:token?await store.session(tokenHash(token)):null);
         if(!user)throw new HttpError(401,'请先登录。');
+        if(path==='/api/lexicon/lookup'&&req.method==='GET'){const entry=wordbank.lookup(new URL(req.url,'http://localhost').searchParams.get('word'));if(!entry)throw new HttpError(404,'词库暂未收录这个词，可以使用有道查词。');send(200,entry);return;}
+        if(path==='/api/lexicon'&&req.method==='GET'){const params=new URL(req.url,'http://localhost').searchParams;send(200,wordbank.search(params.get('q'),params.get('offset'),params.get('limit')));return;}
         if((path==='/api/auth/me'||path==='/api/profile')&&req.method==='GET'){send(200,{username:user.username,passwordless:!!(passwordlessUser||preview)});return;}
         if(path==='/api/auth/logout'&&req.method==='POST'){if(token&&!passwordlessUser)await store.deleteSession(tokenHash(token));res.setHeader('Set-Cookie',cookie('',true));send(200,{ok:true});return;}
         if(path==='/api/state'&&req.method==='GET'){send(200,await store.load(user.id));return;}
