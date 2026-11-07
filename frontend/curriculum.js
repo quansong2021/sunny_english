@@ -114,16 +114,65 @@ const LearningPath = (() => {
     return { question: { ...question, ...question.variants[variant] }, entry: review ? undefined : entry, variant };
   }
   function progress(state,u){return state.learning?.units?.[u.id]||{seen:[],answers:{},spoken:[]};}
-  function coverage(state,u){const p=progress(state,u),qs=questions(u);return steps.filter(([id])=>id!=='summary').map(([id,label])=>{const selected=qs.filter(q=>q.skill===id),count=selected.filter(q=>passed(q,p.answers[q.id])).length;return {id,label,passed:count,total:selected.length,seen:id==='words'?p.seen.length:null,spoken:id==='output'?p.spoken.length:null,complete:count===selected.length&&(id!=='words'||p.seen.length===u.words.length)&&(id!=='output'||p.spoken.length===u.speaking.length)};});}
+  function coverage(state, unit) {
+    const entry = progress(state, unit);
+    const unitQuestions = questions(unit);
+    return steps.filter(([id]) => id !== 'summary').map(([id, label]) => {
+      const selected = unitQuestions.filter(question => question.skill === id);
+      const count = selected.filter(question => passed(question, entry.answers[question.id])).length;
+      const seen = id === 'words' ? entry.seen.length : null;
+      const spoken = id === 'output' ? entry.spoken.length : null;
+      const complete = count === selected.length
+        && (seen === null || seen === unit.words.length)
+        && (spoken === null || spoken === unit.speaking.length);
+      return {
+        id, label, passed: count, total: selected.length, seen, spoken, complete,
+        skipped: id === 'words' && entry.wordsSkipped === true && !complete
+      };
+    });
+  }
   const complete=(s,u)=>coverage(s,u).every(c=>c.complete);
-  function due(state,now=Date.now()){return units.flatMap(u=>{const p=progress(state,u);return questions(u).filter(q=>p.answers[q.id]&&p.answers[q.id].due<=now).map(q=>({unit:u,question:q,entry:p.answers[q.id]}));}).sort((a,b)=>a.entry.due-b.entry.due);}
+  const nextStep = (state, unit) => coverage(state, unit).find(item => !item.complete && !item.skipped)?.id;
+  function setWordsSkipped(state, unit, skipped) {
+    const words = coverage(state, unit).find(item => item.id === 'words');
+    if (skipped) {
+      if (words.skipped || words.complete) return false;
+      ensure(state, unit).wordsSkipped = true;
+      if (state.learning.resume?.unit === unit.id && state.learning.resume.step === 'words') {
+        state.learning.resume = { unit: unit.id, step: nextStep(state, unit) || 'summary' };
+      }
+    } else {
+      const entry = progress(state, unit);
+      if (!entry.wordsSkipped) return false;
+      delete entry.wordsSkipped;
+    }
+    return true;
+  }
+  function due(state, now = Date.now()) {
+    return units.flatMap(unit => {
+      const entry = progress(state, unit);
+      return questions(unit)
+        .filter(question => entry.answers[question.id]?.due <= now
+          && !(entry.wordsSkipped && question.skill === 'words'))
+        .map(question => ({ unit, question, entry: entry.answers[question.id] }));
+    }).sort((a, b) => a.entry.due - b.entry.due);
+  }
   function recommend(state,now=Date.now()){
     const reviews=due(state,now);if(reviews.length)return {unit:reviews[0].unit,step:reviews[0].question.skill,question:reviews[0].question.id,review:true};
     const resumed=units.find(u=>u.id===state.learning?.resume?.unit);
-    if(resumed&&!complete(state,resumed))return {unit:resumed,step:state.learning.resume.step,question:state.learning.resume.question,review:false};
-    const u=units.find(u=>!complete(state,u));
+    if (resumed) {
+      const next = nextStep(state, resumed);
+      if (next) {
+        const { step, question } = state.learning.resume;
+        if (step === 'words' && progress(state, resumed).wordsSkipped) {
+          return { unit: resumed, step: next, review: false };
+        }
+        return { unit: resumed, step, question, review: false };
+      }
+    }
+    const u=units.find(u=>nextStep(state,u));
     if(!u)return {unit:units[units.length-1],step:'summary',review:false};
-    return {unit:u,step:coverage(state,u).find(c=>!c.complete)?.id||'summary',review:false};
+    return {unit:u,step:nextStep(state,u),review:false};
   }
   function ensure(state,u){state.learning||={resume:null,units:{}};state.learning.units[u.id]||={seen:[],answers:{},spoken:[]};return state.learning.units[u.id];}
   function answer(state,u,q,value,now=Date.now(),variant=0){
@@ -131,5 +180,5 @@ const LearningPath = (() => {
     const level=ok?(sameWindow?old.level:Math.min((old?.level||0)+1,5)):0;
     p.answers[q.id]={value,at:now,level,due:ok?(sameWindow?old.due:now+[1,3,7,14,30][level-1]*86400000):now,...(q.variants?{variant}:{})};return ok;
   }
-  return {units,steps,stages,normalize,questions,correct,passed,exercise,progress,coverage,complete,due,recommend,ensure,answer};
+  return {units,steps,stages,normalize,questions,correct,passed,exercise,progress,coverage,complete,nextStep,setWordsSkipped,due,recommend,ensure,answer};
 })();

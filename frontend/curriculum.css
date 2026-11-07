@@ -7,3 +7,5 @@
 .path-stage-coverage { margin: 16px 0; }
 .path-stage-coverage summary { cursor: pointer; color: var(--green); }
 #path-draft { box-sizing: border-box; width: 100%; margin-top: 10px; }
+.path-batch-list { display: grid; gap: 6px; margin: 12px 0; }
+.path-word-actions { margin: 14px 0; }

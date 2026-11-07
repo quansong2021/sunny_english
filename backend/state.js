@@ -80,6 +80,7 @@ export function validLearning(p){
   return !!(record(p)&&(p.resume===null||(record(p.resume)&&Object.hasOwn(pathUnits,p.resume.unit)&&pathSteps.includes(p.resume.step)&&(p.resume.question===undefined||validPathQuestion(p.resume.unit,p.resume.question,p.resume.step))))&&safeEntries(p.units,Object.keys(pathUnits).length,(id,u)=>{
     if(!Object.hasOwn(pathUnits,id)||!record(u))return false;const spec=pathUnits[id];
     if (u.draft !== undefined && (typeof u.draft !== 'string' || u.draft.length > 3000)) return false;
+    if (u.wordsSkipped !== undefined && typeof u.wordsSkipped !== 'boolean') return false;
     const questionCount = 2 * spec.words + (spec.grammar ?? 4) + 2 + (spec.writing ?? 2) + spec.audio + (spec.practice ? 2 : 0);
     return indices(u.seen,spec.words)&&indices(u.spoken,spec.spoken??1)&&safeEntries(u.answers,questionCount,(key,a)=>{
       return validPathQuestion(id,key)&&record(a)&&typeof a.value==='string'&&a.value.length<=500&&time(a.at)&&time(a.due)&&Number.isInteger(a.level)&&a.level>=0&&a.level<=5

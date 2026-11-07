@@ -12,6 +12,31 @@ for (const asset of ['curriculum-units.js', 'curriculum-foundation.js', 'curricu
 const path=vm.runInContext('LearningPath',context),day=86400000;
 const json=x=>JSON.parse(JSON.stringify(x));
 
+test('skipping words preserves existing answers and advances to grammar until restored', () => {
+  const state = emptyState();
+  const unit = path.units[0];
+  const word = path.questions(unit).find(question => question.skill === 'words');
+  const start = 1900000000000;
+  state.learning.resume = { unit: unit.id, step: 'words', question: word.id };
+  path.answer(state, unit, word, word.answer, start);
+  path.ensure(state, unit).seen = [0];
+  const saved = json(path.progress(state, unit).answers);
+  assert.equal(path.setWordsSkipped(state, unit, true), true);
+  assert.equal(path.setWordsSkipped(state, unit, true), false);
+  assert.equal(path.coverage(state, unit)[0].skipped, true);
+  assert.equal(path.coverage(state, unit)[0].complete, false);
+  assert.equal(path.recommend(state, start + day).step, 'grammar');
+  assert.equal(path.due(state, start + day).length, 0);
+  const restored = json(state);
+  assert.ok(validState(restored));
+  assert.deepEqual(restored.learning.units[unit.id].answers, saved);
+  assert.deepEqual(restored.learning.units[unit.id].seen, [0]);
+  assert.equal(path.setWordsSkipped(restored, unit, false), true);
+  assert.equal(path.due(restored, start + day)[0].question.id, word.id);
+  restored.learning.units[unit.id].wordsSkipped = 'yes';
+  assert.equal(validState(restored), false);
+});
+
 test('a due transfer exercise changes the task and checks the saved variant after reload', () => {
   const state = emptyState();
   const unit = path.units.find(unit => unit.id === 'numbers-and-amounts');
