@@ -17,7 +17,7 @@ const LearningPath = (() => {
       listeningQuiz:[['We are a team.','听到的人称是？',['我','我们','他们'],1,'we 表示我们。']],
       writing:[['用 I 开头写“我是一名工程师”。',['I am an engineer.'], 'I + am + an engineer。'],['写“他们是我的同事”。',['They are my colleagues.'],'They 配 are；colleagues 是复数。']],
       speaking:[['介绍你自己，再介绍一位同事。','My name is Sunny. I am an engineer. Alex is my colleague.','先用自己的信息说，再对照参考。可以把 engineer 换成 QA engineer。']],
-      transfer:['I am a QA engineer. I test HR systems.','我是一名 QA 工程师，测试 HR 系统。第二句的动作表达将在下一单元展开。']
+      transfer:['I am a QA engineer. I test HR systems.','我是一名 QA 工程师，测试 HR 系统。第二句的动作表达会在「说清一周的安排」里练习。']
     },
     {
       id:'week', title:'说清一周的安排', goal:'完整认识七天，读懂每周安排，用简单现在时描述固定活动。', prerequisite:'intro',
@@ -61,14 +61,23 @@ const LearningPath = (() => {
     }
   ];
   const units = [
-    ...foundationUnits.map(unit => ({ ...unit, stage: 'foundation', scene: '通用' })),
-    ...ExpandedUnits
+    ...[foundationUnits[0], ...FoundationAdditions, ...foundationUnits.slice(1)]
+      .map(unit => ({ scene: '通用', ...unit, stage: 'foundation' })),
+    ...ExpandedUnits.filter(unit => unit.stage === 'arrange'),
+    ...ExpandedUnits.filter(unit => unit.stage === 'handle' && unit.id !== 'approval-flow'),
+    ...['approval-flow', 'clarifying-rules', 'missed-connection'].map(id => ({
+      ...ExpandedUnits.find(unit => unit.id === id), stage: 'rules'
+    })),
+    { ...ExpandedUnits.find(unit => unit.id === 'prioritizing-issues'), stage: 'negotiate' },
+    { ...ExpandedUnits.find(unit => unit.id === 'handover'), stage: 'exchange' }
   ];
   const stages = [
-    { id: 'foundation', title: '01 起步 · 组成简单句', content: '介绍人物、说一周的安排、询问状态、提出请求。' },
+    { id: 'foundation', title: '01 起步 · 组成简单句', content: '介绍人物，分清人称、归属、物品和数量，再练一周安排、提问与请求。' },
     { id: 'arrange', title: '02 安排 · 约时间和出行', content: '确认月份、日期和时刻，再练约会议、问路、入住和点餐。' },
-    { id: 'handle', title: '03 处理 · 描述经过与问题', content: '用过去时和顺序词说明发生了什么，练缺陷报告、审批流转、值机和住宿反馈。' },
-    { id: 'coordinate', title: '04 协商 · 讨论条件和下一步', content: '澄清规则与边界、比较改签方案、协商缺陷优先级并完成交接。' }
+    { id: 'handle', title: '03 处理 · 描述经过与问题', content: '练缺陷报告、值机和住宿问题说明。' },
+    { id: 'rules', title: '04 规则 · 说明条件和计划', content: '说明审批顺序、例外与改签方案。' },
+    { id: 'negotiate', title: '05 协商 · 解释与比较', content: '比较影响、说明理由并讨论优先级。' },
+    { id: 'exchange', title: '06 应用 · 完成连续交流', content: '练进展交接，逐步补充跨场景综合任务。' }
   ];
   const normalize=s=>String(s).toLowerCase().replace(/[’‘]/g,"'").replace(/\bi'm\b/g,'i am').replace(/\bthey're\b/g,'they are').replace(/\bdon't\b/g,'do not').replace(/\bdoesn't\b/g,'does not').replace(/\bcan't\b/g,'cannot').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
   function choices(u,index){const pool=u.choiceGroups?.find(g=>g.includes(index))||u.words.map((_,i)=>i),position=pool.indexOf(index),group=[index,pool[(position+1)%pool.length],pool[(position+pool.length-1)%pool.length]];const rotate=index%3;return [...group.slice(rotate),...group.slice(0,rotate)].map(i=>u.words[i][1]);}
@@ -79,12 +88,29 @@ const LearningPath = (() => {
       ...u.grammarQuiz.map((q,i)=>({id:`g${i}`,skill:'grammar',prompt:q[0],options:q[1],answer:q[1][q[2]],why:q[3]})),
       ...u.readingQuiz.map((q,i)=>({id:`r${i}`,skill:'reading',prompt:q[0],options:q[1],answer:q[1][q[2]],why:q[3]})),
       ...u.listeningQuiz.map((q,i)=>({id:`a${i}`,skill:'listening',prompt:q[1],audio:q[0],options:q[2],answer:q[2][q[3]],why:q[4]})),
-      ...u.writing.map((q,i)=>({id:`o${i}`,skill:'output',prompt:q[0],accepted:q[1],answer:q[1][0],why:q[2]}))
+      ...u.writing.map((q,i)=>({id:`o${i}`,skill:'output',prompt:q[0],accepted:q[1],answer:q[1][0],why:q[2]})),
+      ...(FoundationPractice[u.id] || []).map(([skill, ...forms], index) => {
+        const variants = forms.map(([prompt, accepted, why, audio]) => ({
+          prompt, accepted, answer: accepted[0], why, audio
+        }));
+        return { ...variants[0], id: `x${index}`, skill, variants };
+      })
     ];
   }
-  const correct=(q,value)=>q.accepted?q.accepted.some(a=>normalize(a)===normalize(value)):value===q.answer;
+  function correct(question, value, variant = 0) {
+    const form = question.variants?.[variant] || question;
+    return form.accepted ? form.accepted.some(answer => normalize(answer) === normalize(value)) : value === form.answer;
+  }
+  const passed = (question, entry) => !!entry && correct(question, entry.value, entry.variant);
+  function exercise(question, entry, now = Date.now()) {
+    if (!question.variants) return { question, entry };
+    const previous = entry?.variant ?? 0;
+    const review = passed(question, entry) && entry.due <= now;
+    const variant = review ? (previous + 1) % question.variants.length : previous;
+    return { question: { ...question, ...question.variants[variant] }, entry: review ? undefined : entry, variant };
+  }
   function progress(state,u){return state.learning?.units?.[u.id]||{seen:[],answers:{},spoken:[]};}
-  function coverage(state,u){const p=progress(state,u),qs=questions(u);return steps.filter(([id])=>id!=='summary').map(([id,label])=>{const selected=qs.filter(q=>q.skill===id),passed=selected.filter(q=>p.answers[q.id]&&correct(q,p.answers[q.id].value)).length;return {id,label,passed,total:selected.length,seen:id==='words'?p.seen.length:null,spoken:id==='output'?p.spoken.length:null,complete:passed===selected.length&&(id!=='words'||p.seen.length===u.words.length)&&(id!=='output'||p.spoken.length===u.speaking.length)};});}
+  function coverage(state,u){const p=progress(state,u),qs=questions(u);return steps.filter(([id])=>id!=='summary').map(([id,label])=>{const selected=qs.filter(q=>q.skill===id),count=selected.filter(q=>passed(q,p.answers[q.id])).length;return {id,label,passed:count,total:selected.length,seen:id==='words'?p.seen.length:null,spoken:id==='output'?p.spoken.length:null,complete:count===selected.length&&(id!=='words'||p.seen.length===u.words.length)&&(id!=='output'||p.spoken.length===u.speaking.length)};});}
   const complete=(s,u)=>coverage(s,u).every(c=>c.complete);
   function due(state,now=Date.now()){return units.flatMap(u=>{const p=progress(state,u);return questions(u).filter(q=>p.answers[q.id]&&p.answers[q.id].due<=now).map(q=>({unit:u,question:q,entry:p.answers[q.id]}));}).sort((a,b)=>a.entry.due-b.entry.due);}
   function recommend(state,now=Date.now()){
@@ -96,10 +122,10 @@ const LearningPath = (() => {
     return {unit:u,step:coverage(state,u).find(c=>!c.complete)?.id||'summary',review:false};
   }
   function ensure(state,u){state.learning||={resume:null,units:{}};state.learning.units[u.id]||={seen:[],answers:{},spoken:[]};return state.learning.units[u.id];}
-  function answer(state,u,q,value,now=Date.now()){
-    const p=ensure(state,u),old=p.answers[q.id],ok=correct(q,value),sameWindow=old&&correct(q,old.value)&&now<old.due;
+  function answer(state,u,q,value,now=Date.now(),variant=0){
+    const p=ensure(state,u),old=p.answers[q.id],ok=correct(q,value,variant),sameWindow=passed(q,old)&&now<old.due;
     const level=ok?(sameWindow?old.level:Math.min((old?.level||0)+1,5)):0;
-    p.answers[q.id]={value,at:now,level,due:ok?(sameWindow?old.due:now+[1,3,7,14,30][level-1]*86400000):now};return ok;
+    p.answers[q.id]={value,at:now,level,due:ok?(sameWindow?old.due:now+[1,3,7,14,30][level-1]*86400000):now,...(q.variants?{variant}:{})};return ok;
   }
-  return {units,steps,stages,normalize,questions,correct,progress,coverage,complete,due,recommend,ensure,answer};
+  return {units,steps,stages,normalize,questions,correct,passed,exercise,progress,coverage,complete,due,recommend,ensure,answer};
 })();

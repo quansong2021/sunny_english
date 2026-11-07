@@ -4,3 +4,5 @@
 .path-unit-coverage { display: block; margin-top: 6px; }
 .path-unit-actions { display: flex; flex-shrink: 0; flex-wrap: wrap; gap: 8px; }
 .path-unit-switch a.secondary { font-size: 12px; padding: 9px 12px; }
+.path-stage-coverage { margin: 16px 0; }
+.path-stage-coverage summary { cursor: pointer; color: var(--green); }

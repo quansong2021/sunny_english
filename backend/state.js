@@ -10,10 +10,14 @@ const validDate=k=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(k))return false;const d=new D
 const safeEntries = (x, limit, check) => record(x) && Object.keys(x).length <= limit && Object.entries(x).every(([k,v]) => !['__proto__','constructor','prototype'].includes(k) && check(k,v));
 const standardPathUnit = { words: 8, audio: 2 };
 const pathUnits = {
-  intro: { words: 13, audio: 1 },
-  week: { words: 12, audio: 2 },
-  questions: { words: 10, audio: 2 },
-  requests: { words: 10, audio: 2 },
+  intro: { words: 13, audio: 1, practice: true },
+  'people-and-roles': { words: 12, audio: 2, practice: true },
+  'objects-and-articles': { words: 12, audio: 2, practice: true },
+  'numbers-to-ten': { words: 14, audio: 2, practice: true },
+  'numbers-and-amounts': { words: 20, audio: 2, practice: true },
+  week: { words: 12, audio: 2, practice: true },
+  questions: { words: 10, audio: 2, practice: true },
+  requests: { words: 10, audio: 2, practice: true },
   'meeting-time': { words: 15, audio: 2 },
   'getting-around': standardPathUnit,
   'hotel-arrival': standardPathUnit,
@@ -30,7 +34,12 @@ const pathUnits = {
 const pathSteps=['words','grammar','listening','reading','output','summary'];
 const time=x=>Number.isSafeInteger(x)&&x>=0&&x<=8640000000000000;
 function validPathQuestion(id,key,step){
-  const match=typeof key==='string'&&/^([wlgrao])(\d{1,2})$/.exec(key);if(!match||!Object.hasOwn(pathUnits,id))return false;
+  if (!Object.hasOwn(pathUnits, id)) return false;
+  if (key === 'x0' || key === 'x1') {
+    const skill = key === 'x0' ? 'listening' : 'output';
+    return pathUnits[id].practice === true && (!step || step === skill);
+  }
+  const match=typeof key==='string'&&/^([wlgrao])(\d{1,2})$/.exec(key);if(!match)return false;
   const spec=pathUnits[id],limit={w:spec.words,l:spec.words,g:4,r:2,a:spec.audio,o:2}[match[1]],skill={w:'words',l:'listening',g:'grammar',r:'reading',a:'listening',o:'output'}[match[1]];
   return String(Number(match[2]))===match[2]&&Number(match[2])<limit&&(!step||step===skill);
 }
@@ -38,8 +47,10 @@ export function validLearning(p){
   const indices=(v,max)=>Array.isArray(v)&&v.length<=max&&new Set(v).size===v.length&&v.every(i=>Number.isInteger(i)&&i>=0&&i<max);
   return !!(record(p)&&(p.resume===null||(record(p.resume)&&Object.hasOwn(pathUnits,p.resume.unit)&&pathSteps.includes(p.resume.step)&&(p.resume.question===undefined||validPathQuestion(p.resume.unit,p.resume.question,p.resume.step))))&&safeEntries(p.units,Object.keys(pathUnits).length,(id,u)=>{
     if(!Object.hasOwn(pathUnits,id)||!record(u))return false;const spec=pathUnits[id];
-    return indices(u.seen,spec.words)&&indices(u.spoken,1)&&safeEntries(u.answers,40,(key,a)=>{
-      return validPathQuestion(id,key)&&record(a)&&typeof a.value==='string'&&a.value.length<=500&&time(a.at)&&time(a.due)&&Number.isInteger(a.level)&&a.level>=0&&a.level<=5;
+    const questionCount = 2 * spec.words + 8 + spec.audio + (spec.practice ? 2 : 0);
+    return indices(u.seen,spec.words)&&indices(u.spoken,1)&&safeEntries(u.answers,questionCount,(key,a)=>{
+      return validPathQuestion(id,key)&&record(a)&&typeof a.value==='string'&&a.value.length<=500&&time(a.at)&&time(a.due)&&Number.isInteger(a.level)&&a.level>=0&&a.level<=5
+        && (a.variant === undefined || ((key === 'x0' || key === 'x1') && [0, 1].includes(a.variant)));
     });
   }));
 }

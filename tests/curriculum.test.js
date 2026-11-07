@@ -6,11 +6,35 @@ import {emptyState,validState} from '../backend/state.js';
 import {MysqlStore,ConflictError} from '../backend/database.js';
 import {createApp} from '../backend/http.js';
 const context=vm.createContext({});
-for (const asset of ['curriculum-units.js', 'curriculum.js']) {
+for (const asset of ['curriculum-units.js', 'curriculum-foundation.js', 'curriculum.js']) {
   vm.runInContext(readFileSync(new URL(`../frontend/${asset}`, import.meta.url), 'utf8'), context);
 }
 const path=vm.runInContext('LearningPath',context),day=86400000;
 const json=x=>JSON.parse(JSON.stringify(x));
+
+test('a due transfer exercise changes the task and checks the saved variant after reload', () => {
+  const state = emptyState();
+  const unit = path.units.find(unit => unit.id === 'numbers-and-amounts');
+  const question = path.questions(unit).find(question => question.id === 'x0');
+  const start = 1900000000000;
+  assert.ok(path.answer(state, unit, question, '15', start, 0));
+  const beforeDue = path.exercise(question, state.learning.units[unit.id].answers.x0, start + day - 1);
+  assert.equal(beforeDue.variant, 0);
+  const due = path.exercise(question, state.learning.units[unit.id].answers.x0, start + day);
+  assert.equal(due.variant, 1);
+  assert.equal(due.entry, undefined);
+  assert.equal(due.question.audio, 'The price is fifty dollars.');
+  assert.equal(path.answer(state, unit, question, '15', start + day, 1), false);
+  const retry = path.exercise(question, state.learning.units[unit.id].answers.x0, start + day);
+  assert.equal(retry.variant, 1);
+  assert.ok(path.answer(state, unit, question, '50', start + day, 1));
+  const restored = json(state);
+  assert.ok(validState(restored));
+  assert.ok(path.passed(question, restored.learning.units[unit.id].answers.x0));
+  assert.equal(path.coverage(restored, unit).find(item => item.id === 'listening').passed, 1);
+  restored.learning.units[unit.id].answers.x0.variant = 2;
+  assert.equal(validState(restored), false);
+});
 
 test('all stages include complete weekday and month groups and their exercises can persist',()=>{
   const weekdays=path.units.find(u=>u.id==='week').words.slice(0,7).map(w=>w[0]);
@@ -18,10 +42,17 @@ test('all stages include complete weekday and month groups and their exercises c
   const week=path.units.find(u=>u.id==='week');assert.ok(path.questions(week).find(q=>q.id==='l6').options.includes('星期六'));
   const months = path.units.find(unit => unit.id === 'meeting-time').words.slice(0, 12).map(word => word[0]);
   assert.deepEqual(json(months), ['January','February','March','April','May','June','July','August','September','October','November','December']);
-  assert.equal(path.stages.length, 4);
-  assert.equal(path.units.length, 16);
+  assert.equal(path.stages.length, 6);
+  assert.equal(path.units.length, 20);
   assert.equal(new Set(path.units.map(unit => unit.id)).size, path.units.length);
-  for (const stage of path.stages) assert.equal(path.units.filter(unit => unit.stage === stage.id).length, 4);
+  assert.equal(path.units.filter(unit => unit.stage === 'foundation').length, 8);
+  for (const stage of path.stages) assert.ok(path.units.some(unit => unit.stage === stage.id));
+  const coverage = vm.runInContext('CourseCoverage', context);
+  for (const [stage, , lessonIds, practiceId] of coverage) {
+    assert.ok(path.stages.some(item => item.id === stage));
+    for (const id of lessonIds) assert.ok(path.units.some(unit => unit.id === id && unit.stage === stage), id);
+    if (practiceId) assert.ok(path.questions(path.units.find(unit => unit.id === practiceId)).some(question => question.variants));
+  }
   const s=emptyState();
   for(const u of path.units){
     assert.ok(!u.prerequisite||path.units.findIndex(x=>x.id===u.prerequisite)<path.units.indexOf(u));
@@ -42,7 +73,7 @@ test('viewing words or self-rating speaking never substitutes for listening, gra
 });
 
 test('review intervals advance across due dates, repeated clicks cannot inflate evidence, and mistakes reset it',()=>{
-  const s=emptyState(),u=path.units[1],q=path.questions(u)[0],start=1900000000000;
+  const s=emptyState(),u=path.units.find(unit => unit.id === 'week'),q=path.questions(u)[0],start=1900000000000;
   path.answer(s,u,q,q.answer,start);let a=s.learning.units.week.answers[q.id];assert.equal(a.level,1);assert.equal(a.due,start+day);
   path.answer(s,u,q,q.answer,start+1000);a=s.learning.units.week.answers[q.id];assert.equal(a.level,1);assert.equal(a.due,start+day);
   assert.equal(path.due(s,start+day-1).length,0);assert.equal(path.due(s,start+day).length,1);
@@ -70,7 +101,7 @@ test('old exports remain valid and unknown units, question keys, unsafe timestam
 });
 
 test('MySQL store includes curriculum data in the same revision transaction and restores JSON on load',async()=>{
-  const s=emptyState();s.done['3-vocab']=true;s.learning.resume={unit:'week',step:'grammar'};const u=path.units[1];path.answer(s,u,path.questions(u)[0],'星期一',1000);
+  const s=emptyState();s.done['3-vocab']=true;s.learning.resume={unit:'week',step:'grammar'};const u=path.units.find(unit => unit.id === 'week');path.answer(s,u,path.questions(u)[0],'星期一',1000);
   let revision=0,storedLearning=null,commits=0,rollbacks=0;const statements=[];
   const connection={beginTransaction:async()=>{},commit:async()=>{commits++;},rollback:async()=>{rollbacks++;},release(){},query:async(sql,values)=>{statements.push([sql,values]);return [[]];},execute:async(sql,values)=>{
     statements.push([sql,values]);
@@ -92,12 +123,12 @@ test('passwordless HTTP roundtrip preserves curriculum with old progress; serves
   let saved=emptyState(),revision=0;const store={load:async()=>({state:structuredClone(saved),revision}),save:async(id,s,r)=>{assert.equal(r,revision);saved=structuredClone(s);return ++revision;}};
   const server=createApp(store,{passwordlessUser:{id:17,username:'sunny'}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
   t.after(()=>new Promise(r=>{server.closeAllConnections();server.close(r);}));const base=`http://127.0.0.1:${server.address().port}`;
-  saved.done['30-vocab']=true;const next=structuredClone(saved),u=path.units[1];path.answer(next,u,path.questions(u).find(q=>q.id==='l6'),'星期日',1000);
+  saved.done['30-vocab']=true;const next=structuredClone(saved),u=path.units.find(unit => unit.id === 'week');path.answer(next,u,path.questions(u).find(q=>q.id==='l6'),'星期日',1000);
   const travel = path.units.find(unit => unit.id === 'missed-connection');
   next.learning.resume = { unit: travel.id, step: 'listening', question: 'a1' };
   path.answer(next, travel, path.questions(travel).find(q => q.id === 'a1'), '七点', 1000);
   const response=await fetch(base+'/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:next,revision})});assert.equal(response.status,200);
   assert.deepEqual((await (await fetch(base+'/api/state')).json()).state,json(next));
-  for(const asset of ['curriculum-units.js','curriculum.js','curriculum-ui.js','curriculum.css']){const r=await fetch(base+'/'+asset);assert.equal(r.status,200);assert.ok((await r.text()).length>100);}
+  for(const asset of ['curriculum-units.js','curriculum-foundation.js','curriculum.js','curriculum-ui.js','curriculum.css']){const r=await fetch(base+'/'+asset);assert.equal(r.status,200);assert.ok((await r.text()).length>100);}
   const invalid=structuredClone(next);invalid.learning.units.week.seen=[99];assert.equal((await fetch(base+'/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:invalid,revision})})).status,400);
 });
